@@ -10,6 +10,7 @@ This page describes each container as observed on real commercial dumps.
 | .mod | the title's ARM code image | the module loader |
 | .ggz | compressed asset archive | the game, then ISHELL_LoadResData |
 | .bar | resource archive with a resource ID directory | ISHELL_LoadResDataEx |
+| .pakz | first-party asset archive, PACK plus LZMA payloads | the VFS, under the title's directory |
 | .mif | module information: name, publisher, version | the shell and the store UI |
 | .bid | interface definition, used by tools | build tooling only |
 | .sig | signature blob shipped beside some titles | installation and validation |
@@ -53,7 +54,7 @@ Used by titles that ship a resources.bar.
 The title opens it through ISHELL_LoadResDataEx, so there is no parser inside the module to trace.
 The layout below was derived from raw bytes and cross-checked against embedded file signatures.
 
-Header, 32 bytes, little-endian:
+Header, 30 bytes, little-endian:
 
 | Offset | Size | Meaning |
 |---|---|---|
@@ -119,7 +120,7 @@ Observed on ten resource packages across the first-party library, 7 487 index en
 | Map the image | writable memory, at any base address |
 | Resolve the entry | call the load entry point with the runtime's helper table |
 | Register the factory | the module hands back its instance creation callback |
-| Expose archives | mount GGZ and BAR so resource calls resolve by name or ID |
+| Expose archives | mount GGZ, BAR and PAKZ so resource calls resolve by name or ID |
 | Parse metadata | read MIF strings for the shell and for user-visible naming |
 
 Evidence: container layouts from real commercial dumps;
