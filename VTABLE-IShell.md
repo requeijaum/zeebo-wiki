@@ -1,4 +1,4 @@
-# VTable IShell (`AEEIShell.h`, ordem SDK) [CONF via header]
+# VTable IShell (`AEEIShell.h`, ordem SDK) [CONF via header]. 32-bit vtable: slot N lives at vtable+N*4; entry 0 = first method after IBase.
 
 | Slot | Método | Retorno | Args |
 |---|---|---|---|

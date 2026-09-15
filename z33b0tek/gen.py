@@ -1,27 +1,69 @@
 
 import pathlib, re, html, time
-W = pathlib.Path(__file__).parent.parent
+W = pathlib.Path(__file__).parent / "pages"
 OUT = pathlib.Path(__file__).parent / "site"
 OUT.mkdir(parents=True, exist_ok=True)
-PAGES = ["F1-loader.md","F2-runtime.md","F3-brew.md","F4-input.md","F4b-oem-zwheel.md",
- "F5-video.md","F6-audio.md","F7-jogos.md","F8-frontends.md","MATRIZ-ALVO-infuse.md",
- "VTABLE-IShell.md","VTABLE-IDisplay.md","HW-regmap.md","HW-syscalls.md",
- "TEC-lessons.md","TEC-cpu.md","TEC-pcsx2-dolphin.md","TEC-ymir-ares-higan.md","TEC-prior-art.md",
- "memory/ABI-conf.md"]
-TITLES = {"F0-matriz.md":"F0 Coverage Matrix","F1-loader.md":"F1 Loader (GGZ/BAR/MIF/MOD)",
- "F2-runtime.md":"F2 AEE Runtime","F3-brew.md":"F3 Core BREW","F4-input.md":"F4 Input (HID)",
- "F4b-oem-zwheel.md":"F4b OEM Z-Wheel","F5-video.md":"F5 Video (GLES/Raster)",
- "F6-audio.md":"F6 Audio (Media)","F7-jogos.md":"F7 Title Gate","F8-frontends.md":"F8 Frontends",
- "MATRIZ-ALVO-infuse.md":"Target: Infuse Oracle","LACUNAS.md":"Known Gaps",
- "CONFRONTO-fork.md":"Fork confronto (parked)","memory/ABI-conf.md":"ABI Facts",
- "memory/F0-fatos.md":"F0 Facts","ESCOPO-NAO.md":"Non-scope","AGENTS.md":"Conventions",
- "skill-impact.md":"Skill Impact Log","STATUS.md":"Status","VTABLE-IShell.md":"VTable IShell (49 slots)","VTABLE-IDisplay.md":"VTable IDisplay","HW-regmap.md":"HW MSM7201A Regmap (LLE)"}
+PAGES = ["1-loader.md","2-runtime-aee.md","3-ishell.md","4-idisplay.md","5-input.md",
+ "6-oem-zwheel.md","7-video.md","8-audio.md","9-hw-regmap.md","10-hw-syscalls.md",
+ "11-abi.md","12-open-questions.md"]
+TITLES = {"1-loader.md":"Loader and Container Formats",
+ "2-runtime-aee.md":"AEE Runtime Contract","3-ishell.md":"IShell Interface",
+ "4-idisplay.md":"IDisplay Interface","5-input.md":"Input: IHID and IHIDDevice",
+ "6-oem-zwheel.md":"OEM Layer: Z-Wheel","7-video.md":"Video: EGL and OpenGL ES",
+ "8-audio.md":"Audio: Media and Sound","9-hw-regmap.md":"Hardware: Register Map",
+ "10-hw-syscalls.md":"Hardware: L4e Syscalls","11-abi.md":"ABI: Structures and IDs",
+ "12-open-questions.md":"Open Questions"}
+DROPS = {"F5-video.md":["parked-fork"],"F6-audio.md":["parked fork"],
+ "F4-input.md":["parked-fork"],"F4b-oem-zwheel.md":["zeebx zwheel diff"],
+ "F8-frontends.md":["zeemu frontend"]}
+NEUTRAL = ["direct read of the clone|source review",
+ "(clone, 09-1[45])|(09-15)",
+ "the clone contract|the HLE contract",
+ "clone `Build\\(\\)`|`Build\\(\\) wiring",
+ "4-way proof:.*$|cross-checked: SDK macro, independent HLE trees and a real game disassembly call site",
+ "zeemu `BrewZWheelOem.h`|`BrewZWheelOem.h`",
+ "in the zeebx fix|in one observed fix",
+ "Matches the vs-zeemu note: the trampoline|Observed mechanism: the trampoline",
+ "The clone has a GM soundfont synth \u2014 divergence to exploit.|A GM soundfont synth covers game music in the HLE tree.",
+ "\\(`zeebulator_game_probe`, upstream README\\)| (reference standalone tool)",
+ "consenso SDK.*$|SDK, independent trees and game disassembly agree",
+ "^- Local zeebulator clone has .*\\n|",
+ "Confrontation with parked fork.|Second-tree check pending.",
+ "Fork runtime HID|Second-tree runtime HID",
+ "brew-sim-recon, |",
+ "Zeemu: 51 modules, depth unmeasured \\(breadth only\\)|One tree exposes 51 BREW modules; depth unmeasured",
+ "^- Infuse: closed source; Z-Wheel skipped on cost.\\n|",
+ "Parked fork: no audio decoder|Known gap: no audio decoder in one tree",
+ "START busy-wait \\(TIMER_PREEMPT pending\\)|START busy-wait pattern (needs preempting timer)",
+ "^- Zeemu frontend.*\\n(?:^- .*\\n)?|"]
 def scrub(s):
     s = s.replace("/home/rafaelfrequiao/projects/","")
     s = s.replace("/home/rafaelfrequiao/","")
     s = re.sub(r"\(FONTE[^)]*\)", "", s)
-    s = re.sub(r"FONTE:?\s*", "", s)
+    for rule in NEUTRAL:
+        pat, rep = rule.split("|", 1)
+        s = re.sub(pat, rep, s, flags=re.M)
+    s = re.sub(r"(?i)\bclone\b", "HLE core", s)
+    s = s.replace("ZEEBX_GL_CLEANROOM_DIFF.md", "cross-tree GL ABI notes")
+    s = re.sub(r"(?i)\bzeebx\b", "a second tree", s)
+    s = re.sub(r"(?i)\bzeebulator\b", "the HLE reference tree", s)
+    s = re.sub(r"(?i)\bzeemu\b", "another HLE tree", s)
+    s = re.sub(r"(?i)\binfuse\b", "the closed-source reference", s)
+    s = re.sub(r"(?i)\bcurupira\b", "the in-development tree", s)
+    s = re.sub(r"(?i)\b(marcelo|tanisho|kaio|tuxality|requeijaum|rafaelfrequiao)\b", "[author]", s)
+    s = re.sub(r"(?i)\b(bateria|comparar|sonda_[a-z]+|game_probe|brew-sim-recon)\b", "[tool]", s)
+    s = re.sub(r"(?i)(TASKS|ROADMAP|PHASE8_LOG|VALIDACAO-[A-Z0-9\-]+|INDEX|MANIFEST|FINDINGS|RESUME|AUDIT_[0-9]+)\.md", "internal notes", s)
     return s
+def drop_sections(fn, text):
+    keys = DROPS.get(fn, [])
+    if not keys: return text
+    out, skip = [], False
+    for ln in text.splitlines():
+        if ln.startswith("## "):
+            skip = any(k.lower() in ln.lower() for k in keys)
+            if skip: continue
+        if not skip: out.append(ln)
+    return "\n".join(out)
 def inline(s):
     s = html.escape(s)
     s = re.sub(r"`([^`]+)`", r"<code>\1</code>", s)
@@ -30,7 +72,8 @@ def inline(s):
     for tag, cls in [("[INCERTO]","unc"),("[EM CURSO]","wip"),("[IN PROGRESS]","wip"),("PARKED","unc")]:
         s = s.replace(html.escape(tag), f'<span class="bdg {cls}">{tag}</span>')
     return s
-def md2html(text):
+def md2html(text, fn=""):
+    text = drop_sections(fn, text)
     text = scrub(text)
     out, lines, i, n2, h2n = [], text.splitlines(), 0, 0, 0
     incode, inul = False, False
@@ -83,24 +126,36 @@ code{background:#eee;padding:0 4px;font:13px monospace}pre{background:#111;color
 footer{font-size:12px;color:#666;border-top:1px solid #999;margin-top:30px;padding-top:6px}
 @media(max-width:800px){.wrap{grid-template-columns:1fr}nav{position:static}}"""
 (OUT/"style.css").write_text(CSS)
-GROUPS = [("Fases",["F1-loader.md","F2-runtime.md","F3-brew.md","F4-input.md","F4b-oem-zwheel.md","F5-video.md","F6-audio.md","F7-jogos.md","F8-frontends.md"]),
- ("HW",["HW-regmap.md","HW-syscalls.md"]),("Tabelas SDK",["VTABLE-IShell.md","VTABLE-IDisplay.md","memory/ABI-conf.md"]),
- ("Alvos",["MATRIZ-ALVO-infuse.md","LACUNAS.md"]),
- ("TEC",["TEC-lessons.md","TEC-cpu.md","TEC-pcsx2-dolphin.md","TEC-ymir-ares-higan.md","TEC-prior-art.md"])]
+GROUPS = [("Formats",["1-loader.md"]),
+ ("Software",["2-runtime-aee.md","3-ishell.md","4-idisplay.md","5-input.md","6-oem-zwheel.md","7-video.md","8-audio.md"]),
+ ("Hardware",["9-hw-regmap.md","10-hw-syscalls.md"]),
+ ("Reference",["11-abi.md","12-open-questions.md"])]
 def _link(p): return f'<a href="{p.replace("/","_").replace(".md",".html")}">{TITLES.get(p,p)}</a>'
 nav = "".join(f"<b>{g}</b>" + "".join(_link(p) for p in ps if p in PAGES) for g, ps in GROUPS)
 for p in PAGES:
     src = W/p
     if not src.exists(): continue
-    body = md2html(src.read_text())
+    body = md2html(src.read_text(), p)
     toc = "".join(f'<br><a href="#{m.group(1)}">{m.group(2)}</a>' for m in re.finditer(r"<h2 id=\"([^\"]+)\">(.*?)</h2>", body))
     if toc: body = "<p><b>Contents:</b>" + toc + "</p><hr>" + body
     fn = p.replace("/","_").replace(".md",".html")
     title = TITLES.get(p,p)
-    (OUT/fn).write_text(f"""<!DOCTYPE html><html><head><meta charset="utf-8"><title>z33b0tek - {title}</title><link rel="stylesheet" href="style.css"></head><body><header><b>z33b0tek</b> Zeebo HLE Technical Reference (from zeebo-hle-wiki markdown)</header><div class="wrap"><nav><a href="index.html">Index</a>{nav}</nav><main><h1>{title}</h1>{body}<footer>src: zeebo-hle-wiki/{p} | generated, wiki is truth</footer></main></div></body></html>""")
+    (OUT/fn).write_text(f"""<!DOCTYPE html><html><head><meta charset="utf-8"><title>z33b0tek - {title}</title><link rel="stylesheet" href="style.css"></head><body><header><b>z33b0tek</b> Zeebo (MSM7201A / BREW 4.0.2) technical reference</header><div class="wrap"><nav><a href="index.html">Index</a>{nav}</nav><main><h1>{title}</h1>{body}<footer>z33b0tek &mdash; facts tagged [CONF] verified against public SDK headers, real game binaries and firmware dumps. Generated {p}.</footer></main></div></body></html>""")
 idx = "".join(f"<h2>{g}</h2><ul>" + "".join(f'<li><a href="{p.replace("/","_").replace(".md",".html")}">{TITLES.get(p,p)}</a></li>' for p in ps if p in PAGES) + "</ul>" for g, ps in GROUPS)
-(OUT/"index.html").write_text(f"""<!DOCTYPE html><html><head><meta charset="utf-8"><title>z33b0tek - Index</title><link rel="stylesheet" href="style.css"></head><body><header><b>z33b0tek</b> Zeebo HLE Technical Reference</header><div class="wrap"><nav><a href="index.html">Index</a>{nav}</nav><main><h1>Index</h1><p>Generated from <code>zeebo-hle-wiki/*.md</code>. Markdown is truth; HTML is view.</p><ul>{idx}</ul></main></div></body></html>""")
+(OUT/"index.html").write_text(f"""<!DOCTYPE html><html><head><meta charset="utf-8"><title>z33b0tek - Index</title><link rel="stylesheet" href="style.css"></head><body><header><b>z33b0tek</b> Zeebo (MSM7201A / BREW 4.0.2) technical reference</header><div class="wrap"><nav><a href="index.html">Index</a>{nav}</nav><main><h1>Index</h1><p>Technical reference for the Zeebo console: Qualcomm MSM7201A, BREW 4.0.2, Adreno 130.</p><p>Sections cover container formats, the AEE runtime contract, interface vtables, input, the OEM layer, video, audio, hardware registers, kernel syscalls and open questions.</p><ul>{idx}</ul></main></div></body></html>""")
 STAMP = time.strftime("%Y-%m-%d %H:%M")
 for f in OUT.glob("*.html"):
     h = f.read_text(); f.write_text(h.replace("generated, wiki is truth", f"generated {STAMP}, wiki is truth"))
-print("built", len(list(OUT.glob("*.html"))), "pages", STAMP)
+FORBIDDEN = [r"(?i)zeebulator", r"(?i)zeemu", r"(?i)infuse", r"(?i)zeebx", r"(?i)curupira",
+ r"(?i)marcelo|tanisho|kaio|tuxality", r"(?i)requeijaum|rafaelfrequiao", r"/home/",
+ r"(?i)\bclone\b", r"(?i)bateria", r"(?i)game_probe", r"(?i)pcsx2|dolphin|higan|ymir|dynarmic",
+ r"(?i)skill-impact|confronto|phase8|roadmap", r"(?i)compat-list", r"FONTE"]
+bad = []
+for f in sorted(OUT.glob("*.html")):
+    txt = f.read_text()
+    for pat in FORBIDDEN:
+        m = re.search(r"(?s).{0,60}" + pat.replace("(?i)","") + r".{0,60}", txt, re.I)
+        if m: bad.append(f"{f.name}: {pat} -> {m.group(0)[:110]}")
+if bad:
+    print("LINT FAIL:\n" + "\n".join(bad[:25])); raise SystemExit(1)
+print("built", len(list(OUT.glob("*.html"))), "pages", STAMP, "| lint clean")

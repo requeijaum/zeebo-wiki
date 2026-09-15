@@ -9,3 +9,4 @@ INCERTO = loader-zeebulator, brew-zeebulator (genéricas), oem-zwheel + ggz-form
 - CORREÇÃO: fork canônico = projects/curupira branch dev (core/+tools/+tests); zeebo-emulator/full-rewrite guarda docs/testkit/research. Confrontos passam a mirar curupira/dev.
 - Direção: confronto curupira PARKED (in-dev, pedido 15/09). Foco volta ao clone + dossiers; CONFRONTO-fork.md congela como está.
 - Slot SetClipRect: divergência 18v19 resolvida p/ 18 (IBase=2 slots). Lição: nunca assumir QueryInterface na vtable; contar a partir do INHERIT_IBase real.
+- Site separado da wiki: z33b0tek passou a ter fonte própria (pages/) + lint que quebra o build. Motivo: scrub frágil vazava nomes de projetos; wiki é lab, site é referência.
