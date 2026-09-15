@@ -78,26 +78,39 @@ Verification: on a real resources.bar, embedded RIFF, ID3 and PNG file signature
 
 ## Metadata: MIF
 
-The MIF is the same container as the BAR, with the resource directory used to name the module fields.
+The MIF is the same container as the BAR, with the resource directory naming the module fields.
 Verified on 62 shipped titles, cross-checked against BAR payloads and the public SDK:
 
-- Header: 30 bytes, little-endian, as the table above (magic 0x0011, two version fields, registry, index, data and end offsets).
-- Registry records are 8 bytes: type (u16), requested id (u16), unknown (u16), entry index (u16).
-- String payloads carry an encoding marker byte before the text: 0x03 for 8-bit text, 0xFF 0xFE / 0xFE 0xFF for UTF-16 with a BOM. A reader scans for markers rather than splitting on nulls.
-- Resource IDs 6, 7 and 8 are the company, author and version fields (AEEShell IDS_MIF_COMPANY/AUTHOR/VERSION).
-- Some files carry trailing bytes after the last index offset; they are a footer, not resources, and a strict reader must validate the end offset.
-- The applet class ID is not in this file: it comes from the runtime class registry or the module, not from the MIF.
+- Header: 30 bytes, little-endian, as the table above.
+- The header holds magic 0x0011, two version fields, registry, index, data and end offsets.
+- Registry records are 8 bytes, read as four u16 fields.
+- The fields are type, requested id, unknown and entry index.
+- String payloads carry an encoding marker byte before the text.
+- The marker 0x03 selects 8-bit text.
+- The markers 0xFF 0xFE and 0xFE 0xFF select UTF-16 with a BOM.
+- A reader scans for markers rather than splitting on nulls.
+- Resource IDs 6, 7 and 8 are the company, copyright and version fields (AEEShell IDS_MIF_COMPANY / IDS_MIF_COPYRIGHT / IDS_MIF_VERSION).
+- ISHELL_GetAppAuthor / GetAppCopyright / GetAppVersion select them with a null file name.
+- Some files carry trailing bytes after the last index offset.
+- They are a footer, not resources, and a strict reader must validate the end offset.
+- The MIF directory also carries the applet record with the class ID, read by walking the offset table.
+- The module and the runtime class registry are alternative sources.
 
 ## Asset archive: PAKZ
 
 The first-party packer writes PACK followed by LZMA_ALONE streams.
-Observed on ten resource packages across the first-party library, 7 487 index entries total:
+Observed on ten resource packages across the first-party library, 7 487 index entries total.
 
 - The file opens with the magic PACK.
-- An index of 64-byte records follows; each record names an entry and carries its offset and size.
-- The name field is 56 bytes, not 40. On 354 of the 7 487 observed entries the NUL terminator falls in bytes 41-43, and the tail of the name lives in bytes 40-55; a reader that stops at 40 bytes truncates those names.
+- An index of 64-byte records follows.
+- Each record names an entry and carries its offset and size.
+- The name field is 56 bytes, not 40.
+- On 354 of the 7 487 observed entries the NUL terminator falls in bytes 41-43.
+- The tail of the name lives in bytes 40-55.
+- A reader that stops at 40 bytes truncates those names.
 - Each entry payload is an LZMA_ALONE stream that decompresses cleanly.
-- Index names may carry the leading directory or omit it (ani/touxiang1 vs resources/ani/touxiang1); the runtime matches both.
+- Index names may carry the leading directory or omit it.
+- The runtime matches both, for example ani/touxiang1 and resources/ani/touxiang1.
 
 ## What the loader must do
 

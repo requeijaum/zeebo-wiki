@@ -7,9 +7,23 @@ Nothing here should be presented as settled behaviour.
 
 Closed 2026-09-15:
 
-- The BAR header offset 8 is the registry start; the fields at 0..28 are now confirmed (magic 0x0011, version fields, registry, index, data and end offsets). The same header serves the MIF.
-- The full MIF layout is settled: same container as the BAR (records of 8 bytes), string payloads with 0x03 / UTF-16 BOM markers, resource IDs 6/7/8 for company/author/version, possible trailing footer. Basis: 62 shipped MIF files parsed with offsets cross-checked against payload signatures.
-- Container survey of the 62-title library: PAKZ (magic PACK, LZMA_ALONE payloads), ZTEX (.tex), QX (.qxt/.qxa/.qxm), FNZ fonts, NAMCO 3D (.n3d/.nsk), BIGF/BIG4 (.big/.viv), JDLZ (.lzc), SHPM (.msh), IANN (.rwh), SWERVE/SWVARC (.m3g/.sar). The BIGF/BIG4/JDLZ/SHPM set appears only in the resource set of a single title; PAKZ is exclusive to the first-party engine family.
+- The BAR header offset 8 is the registry start.
+- The fields at 0..28 are now confirmed (magic 0x0011, version fields, registry, index, data and end offsets).
+- The same header serves the MIF.
+- The full MIF layout is settled: same container as the BAR, records of 8 bytes.
+- String payloads carry 0x03 or UTF-16 BOM markers.
+- Resource IDs 6/7/8 are company, copyright and version.
+- A trailing footer may follow the last record.
+- Basis: 62 shipped MIF files parsed, offsets cross-checked against payload signatures.
+- Container survey of the 62-title library, by magic.
+- PAKZ opens with PACK and holds LZMA_ALONE payloads.
+- ZTEX is the .tex image, QX covers .qxt/.qxa/.qxm.
+- FNZ marks a font, NAMCO 3D covers .n3d/.nsk.
+- BIGF and BIG4 open .big and .viv.
+- JDLZ opens .lzc, SHPM opens .msh, IANN opens .rwh.
+- SWERVE and SWVARC open .m3g and .sar.
+- The BIGF/BIG4/JDLZ/SHPM set appears only in the resource set of a single title.
+- PAKZ is exclusive to the first-party engine family.
 
 Still open:
 

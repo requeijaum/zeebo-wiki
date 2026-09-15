@@ -26,6 +26,22 @@ Titles query these by class ID through ISHELL_CreateInstance.
 A runtime that implements only PCM will fail the creation for every other class;
 a runtime that implements creation but not playback produces a title that runs and stays silent.
 
+## Qualcomm audio: QCP (PureVoice)
+
+MEDIAQCP (0x01005503) is the Qualcomm codec format on the MSM platform.
+The SDK names it PureVoice, and the media-format headers split the playback path in two:
+
+- `IMediaQCP` plays and records QCP (PureVoice) format.
+- `IMediaMIDIOutQCP` plays QCP files in the foreground using the MIDI device (class 0x01005506).
+- The MIME registration in AEEMimeTypes.h: `snd/qcp`, `audio/qcp`, and the `vnd.qcelp` variants.
+- The file extension registered is `qcp`.
+
+The platform shares a finite voice budget for playback:
+- The documented mixer recipe is 1 MIDI/MMF/PMD stream plus up to 4 QCP/AMR/ADPCM streams.
+- All 4 voice streams must be the same type.
+- On MSM-based devices with BREW 3.1.5 or lower, a QCP/AMR/ADPCM start requires the applet to yield before the next steps.
+- The Zeebo is MSM7201A on BREW 4.0.2, so the modern synchronous path applies.
+
 ## Interfaces
 
 <!-- BEGIN GENERATED: IMedia -->

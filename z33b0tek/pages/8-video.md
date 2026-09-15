@@ -57,12 +57,38 @@ A runtime that leaves a stale error value set makes a title take its fallback pa
 
 ## Extension gating
 
-Titles probe the extension set before initialising 3D and abandon rendering when a required name is absent.
+Titles probe the extension set before initialising 3D.
+They abandon rendering when a required name is absent.
 Measured across the library:
 
-- A group of titles checks `GL_OES_draw_texture` in `GetString(GL_EXTENSIONS)` before creating their render target; without it they stop at a clear error screen. `glDrawTex*OES` is the window-coordinate blit they use to present.
-- The Z-Wheel store UI also probes for `GL_ATI_texture_compression_atitc` before building its stage, whose textures are ATITC-compressed `.qxt` files.
-- Announcing an extension without serving its entry points makes the title call a function that does not exist; omitting a served one makes it refuse to start. The two sides must ship together.
+- A group of titles checks `GL_OES_draw_texture` in `GetString(GL_EXTENSIONS)` before creating their render target.
+- Without it they stop at a clear error screen.
+- `glDrawTex*OES` is the window-coordinate blit they use to present.
+- The Z-Wheel store UI probes for `GL_ATI_texture_compression_atitc` before building its stage.
+- The stage textures are ATITC-compressed `.qxt` files.
+- Announcing an extension without serving its entry points makes the title call a function that does not exist.
+- Omitting a served one makes it refuse to start.
+- The two sides must ship together.
+
+## Qualcomm vendor extensions
+
+The vendor layer is ATI/Qualcomm imageon silicon.
+Titles carry their own extension name tables, decoded from shipped modules:
+
+- Screen blit through `GL_OES_draw_texture`.
+- Matrix palette through `glMatrixIndexPointerOES` and `glWeightPointerOES`.
+- Off-screen targets through `GL_OES_framebuffer_object`.
+- Vertex buffers are Qualcomm-named, not ARB.
+- The names are `glBindBufferQUALCOMM` and `glBufferDataQUALCOMM`.
+- ATI mesh lists arrive as `glMeshListATI` and `glDrawVertexBufferObjectATI`.
+- Texture compression is `GL_ATI_texture_compression_atitc`, the ATITC codec.
+- The platform's own extension list announces ATITC together with `GL_ATI_imageon_misc`.
+- EGL surface extras are Qualcomm-named as well.
+- They are `eglSurfaceColorKeyEnableQUALCOMM`, `eglSurfaceTransparency*` and `eglCreateCompositeSurfaceQUALCOMM`.
+- Two vendor interfaces are reached by IID, `EGLSurfaceManip` and `GLESImageonExt`.
+- The composite surface path goes through the vendor EGL object.
+
+An implementation that announces only what it serves avoids both failure modes.
 
 ## IGL and IEGL ABI generations
 
