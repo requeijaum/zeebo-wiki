@@ -27,7 +27,8 @@ O scheduler por corrotinas de higan/ares não é um quick win para a arquitetura
 
 ### A. Scheduler de deadlines absolutos — adotar o desenho, não o código
 
-`libs/ymir-core/include/ymir/core/scheduler.hpp` mantém um contador global, deadlines absolutos, o deadline mais próximo pré-calculado e fatores racionais `numerator/denominator` por evento. Eventos são registrados com IDs estáveis e podem ser serializados.
+`libs/ymir-core/include/ymir/core/scheduler.hpp` mantém um contador global, deadlines absolutos, o deadline mais próximo pré-calculado e fatores racionais `numerator/denominator` por evento.
+Eventos são registrados com IDs estáveis e podem ser serializados.
 
 Aplicação no Zeebo:
 
@@ -41,7 +42,8 @@ Aplicação no Zeebo:
 
 ### B. Barramento paginado com fast path e acesso de debug — adotar incrementalmente
 
-`libs/ymir-core/include/ymir/sys/bus.hpp` divide o espaço em páginas. Cada página aponta diretamente para RAM ou para handlers MMIO; mapeamento de arrays pode espelhar a mesma memória em várias faixas. O mesmo mapa mantém waitstates e separa `Read/Write` de `Peek/Poke` sem efeitos.
+`libs/ymir-core/include/ymir/sys/bus.hpp` divide o espaço em páginas. Cada página aponta diretamente para RAM ou para handlers MMIO; mapeamento de arrays pode espelhar a mesma memória em várias faixas.
+O mesmo mapa mantém waitstates e separa `Read/Write` de `Peek/Poke` sem efeitos.
 
 Aplicação no Zeebo:
 
@@ -68,15 +70,18 @@ Aplicação no Zeebo:
 - distinguir `peek` físico/sem efeito de uma leitura MMIO real;
 - manter tracing fora do C++ por padrão: o C++ publica eventos tipados somente quando um assinante existe; filtragem e automação ficam em Lua/Python/ControlServer.
 
-Tracers semânticos também distinguem execução, branch, call, return, exceção, interrupção e mudanças de pilha. Isso pode fortalecer o `backtrace`: o cliente mantém uma pilha de chamadas baseada em eventos reais, em vez de tentar inferi-la apenas da RAM.
+Tracers semânticos também distinguem execução, branch, call, return, exceção, interrupção e mudanças de pilha.
+Isso pode fortalecer o `backtrace`: o cliente mantém uma pilha de chamadas baseada em eventos reais, em vez de tentar inferi-la apenas da RAM.
 
 Isso atende à diretriz de parar de adicionar instrumentação ad hoc sem perder observabilidade.
 
 ### D. Save-state validado e pós-restauração — corrigir o save-state atual
 
-O Ymir usa três etapas por componente: `SaveState`, `ValidateState`, `LoadState`, com `PostLoadState`/sincronização quando caches, callbacks ou render threads precisam ser reconstruídos. O scheduler e os eventos pendentes também fazem parte do estado.
+O Ymir usa três etapas por componente: `SaveState`, `ValidateState`, `LoadState`, com `PostLoadState`/sincronização quando caches, callbacks ou render threads precisam ser reconstruídos.
+O scheduler e os eventos pendentes também fazem parte do estado.
 
-O `ZeeboSaveStateManager` atual (`tools/cpp/zeebo_save_state.h`, versão 2) salva contextos Unicorn, contadores/PCs e todas as regiões mapeadas. Ele **não salva o estado dos modelos de dispositivo**, scheduler/eventos, hooks de script, GPU/GL, EFS/VFS ou metadados de IRQ. Portanto ainda não é checkpoint de máquina completa.
+O `ZeeboSaveStateManager` atual (`tools/cpp/zeebo_save_state.h`, versão 2) salva contextos Unicorn, contadores/PCs e todas as regiões mapeadas.
+Ele **não salva o estado dos modelos de dispositivo**, scheduler/eventos, hooks de script, GPU/GL, EFS/VFS ou metadados de IRQ. Portanto ainda não é checkpoint de máquina completa.
 
 Quick win proposto: formato chunked versão 3, com hash da cópia de NAND/firmware e cada subsistema implementando:
 
@@ -89,15 +94,19 @@ Gate obrigatório: salvar no ponto A, rodar N eventos, guardar hash de bytes/pix
 
 ### E. Protocolo JSON-RPC tipado — aproveitar sem quebrar NDJSON
 
-O clone local possui framing por linha e mensagens JSON-RPC 2.0 tipadas, com IDs, erros estruturados e notificações assíncronas. Nosso ControlServer já usa NDJSON, mas o parser textual e a ausência de notificações robustas são débitos conhecidos.
+O clone local possui framing por linha e mensagens JSON-RPC 2.0 tipadas, com IDs, erros estruturados e notificações assíncronas.
+Nosso ControlServer já usa NDJSON, mas o parser textual e a ausência de notificações robustas são débitos conhecidos.
 
-Aplicação: manter o transporte TCP/NDJSON e evoluir o envelope para `id/method/params/result/error`; usar notificações para breakpoint, watchpoint e evento de probe. Fazer compatibilidade temporária com os comandos atuais.
+Aplicação: manter o transporte TCP/NDJSON e evoluir o envelope para `id/method/params/result/error`; usar notificações para breakpoint, watchpoint e evento de probe.
+Fazer compatibilidade temporária com os comandos atuais.
 
 ### F. Dirty tracking para o futuro dynarec — preservar no plano, não antecipar
 
-O trabalho de dynarec presente no clone local usa buckets de código com bits sujos e contadores de versão; blocos compilados verificam a versão da região e são recompilados após escrita. Também mantém caches por instância de CPU e telemetria de hit/miss/fallback.
+O trabalho de dynarec presente no clone local usa buckets de código com bits sujos e contadores de versão; blocos compilados verificam a versão da região e são recompilados após escrita.
+Também mantém caches por instância de CPU e telemetria de hit/miss/fallback.
 
-Aplicação futura: ARM11 e ARM9 com caches separados, `notify_write(address,size)`, regiões ROM dispensadas de tracking e gate intérprete-versus-JIT por bytes. Enquanto Unicorn continuar sendo o executor, `uc_ctl_remove_cache` permanece o mecanismo correto.
+Aplicação futura: ARM11 e ARM9 com caches separados, `notify_write(address,size)`, regiões ROM dispensadas de tracking e gate intérprete-versus-JIT por bytes.
+Enquanto Unicorn continuar sendo o executor, `uc_ctl_remove_cache` permanece o mecanismo correto.
 
 ### G. Headless core e callbacks — já estamos alinhados
 
@@ -107,7 +116,8 @@ Ymir roda sem áudio/vídeo e oferece renderer nulo. O Zeebo LLE já é CLI/head
 
 ### A. Testes transacionais de CPU — adotar já
 
-`tests/arm7tdmi/arm7tdmi.cpp` carrega casos com estado inicial/final e uma sequência esperada de transações de barramento (`prefetch/load/store`, tamanho, endereço, dado, ciclo e flags de acesso). O teste falha tanto por registro errado quanto por acesso de memória fora de ordem.
+`tests/arm7tdmi/arm7tdmi.cpp` carrega casos com estado inicial/final e uma sequência esperada de transações de barramento (`prefetch/load/store`, tamanho, endereço, dado, ciclo e flags de acesso).
+O teste falha tanto por registro errado quanto por acesso de memória fora de ordem.
 
 Aplicação no Zeebo:
 
@@ -132,7 +142,8 @@ Não vale importar toda a nall; uma interface local pequena preserva o benefíci
 
 ### C. GDB Remote Serial Protocol — aproveitar como adaptador, não substituir o agente
 
-O ares possui `nall::GDB::Server`, independente de sistema e dirigido por callbacks de memória, registradores, invalidação de cache, breakpoints e watchpoints. A integração real está no N64 e suporta GDB CLI, VSCode e CLion.
+O ares possui `nall::GDB::Server`, independente de sistema e dirigido por callbacks de memória, registradores, invalidação de cache, breakpoints e watchpoints.
+A integração real está no N64 e suporta GDB CLI, VSCode e CLion.
 
 O Zeebo já possui pause/continue/step, breakpoints, `peek/poke`, backtrace e invalidação do cache Unicorn no ControlServer. Logo um servidor RSP ARM é de escopo moderado:
 
@@ -156,7 +167,8 @@ Aplicação: adicionar filtros equivalentes no cliente Python/Lua do Zeebo, alim
 
 ### E. Barramento: falha explícita em acesso não mapeado — combinar com o fast path
 
-O barramento do N64 no ares despacha faixas de forma explícita e possui caminhos como `freezeUnmapped`/`freezeUncached`, registrando também o PC responsável. Não devemos trocar a LUT/memória direta do Zeebo por uma cascata de ranges, mas podemos adotar a política:
+O barramento do N64 no ares despacha faixas de forma explícita e possui caminhos como `freezeUnmapped`/`freezeUncached`, registrando também o PC responsável.
+Não devemos trocar a LUT/memória direta do Zeebo por uma cascata de ranges, mas podemos adotar a política:
 
 - RAM e aliases continuam no caminho rápido;
 - MMIO conhecido vai para handlers tipados por largura;
@@ -229,4 +241,5 @@ Converter um teste existente e provar acesso de barramento + estado final; depoi
 
 ## Decisão
 
-Adotar **Ymir para estado/scheduler/debug sem efeitos** e **ares para testes transacionais, filtros de trace e GDB RSP**. Não importar o scheduler por corrotinas de higan/ares nesta fase. Não copiar código GPL do Ymir/higan; documentar e reimplementar os comportamentos necessários. O ares pode fornecer código permissivo, mas somente em módulo isolado com atribuição e revisão das dependências.
+Adotar **Ymir para estado/scheduler/debug sem efeitos** e **ares para testes transacionais, filtros de trace e GDB RSP**. Não importar o scheduler por corrotinas de higan/ares nesta fase.
+Não copiar código GPL do Ymir/higan; documentar e reimplementar os comportamentos necessários. O ares pode fornecer código permissivo, mas somente em módulo isolado com atribuição e revisão das dependências.

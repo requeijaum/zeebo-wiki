@@ -1,14 +1,14 @@
-# F6 — áudio [EM CURSO]
-## [CONF] `media_hle.cpp` clone (15/09)
-- Objeto mídia: Allocate/CreateMediaObject, AddRef/Release, RegisterNotify/LastNotify.
-- Dados: ApplyMediaData, Set/GetMediaParm; transporte: Play/Stop/Pause/Resume, Tick (host),
+# F6 — Audio [IN PROGRESS]
+## [CONF] `media_hle.cpp` clone (09-15)
+- Media object: Allocate/CreateMediaObject, AddRef/Release, RegisterNotify/LastNotify.
+- Data: ApplyMediaData, Set/GetMediaParm; transport: Play/Stop/Pause/Resume, host Tick,
   GetTotalTime/GetState; save-state: Serialize/Deserialize.
-- Casa com note vs-zeemu: trampoline grava MediaHle real em media_source+8; Play do guest
-  dereferencia [+0x28]->[+8]->vtable->[6]; Release zera +8 (NULL-wander do DD).
-## [CONF] fork `curupira/core/brew/imedia.cpp` + `core/audio/misturador.*` (15/09)
-- CLSIDs mídia mapeados: MEDIA/MIDI/MP3/QCP/PMD/MIDIOUT/MPEG4/ADPCM/AAC/SAF/PCM (0x01005500+).
-- PCM16 via `MMD_BUFFER.pData`; mixer = `misturador`.
-- Lacuna honesta no código: "NÃO há descodificador de áudio nesta árvore" (nem WAV);
-  arquivo no VFS sem decoder = aviso, não som. Clone tem synth GM soundfont — divergência a explorar.
-## Pendente
-- Gate DD áudio real; scanout MDDI.
+- Matches the vs-zeemu note: the trampoline stores a real MediaHle at media_source+8; the guest
+  Play dereferences [+0x28]->[+8]->vtable->[6]; Release zeroes +8 (the DD NULL-wander).
+## [CONF] parked fork `curupira/core/brew/imedia.cpp` + `core/audio/misturador.*` (09-15)
+- Media CLSIDs mapped: MEDIA/MIDI/MP3/QCP/PMD/MIDIOUT/MPEG4/ADPCM/AAC/SAF/PCM (0x01005500+).
+- 16-bit PCM via `MMD_BUFFER.pData`; mixer = `misturador`.
+- Honest gap in code: "NO audio decoder in this tree" (not even WAV);
+  a file in VFS without decoder = warning, no sound. The clone has a GM soundfont synth — divergence to exploit.
+## Pending
+- Real DD audio gate; MDDI scanout.

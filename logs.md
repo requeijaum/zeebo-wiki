@@ -2,7 +2,8 @@
 
 ## loader-zeebulator (61s)
 
-Zeebulator loads GGZ/BAR/MIF files by emulating the BREW API surface within its high‑level HLE layer rather than loading any copyrighted firmware or BIOS. This approach follows the design principle of cleanly reimplementing the BREW OS APIs, as described in the source document.  
+Zeebulator loads GGZ/BAR/MIF files by emulating the BREW API surface within its high‑level HLE layer rather than loading any copyrighted firmware or BIOS.
+This approach follows the design principle of cleanly reimplementing the BREW OS APIs, as described in the source document.  
 
 Resposta: Carrega GGZ/BAR/MIF via emulação da API do BREW | FONTE (/home/rafaelfrequiao/projects/zeebulator/research/sources/zeebulator.md) | <fato>
 
@@ -48,12 +49,14 @@ e, além disso, cerca de 20 títulos do Zeebo que iniciam a inicialização mas 
 
 ## oem-zwheel (37s)
 
-Zeebulator models the guest's own sound‑channel object graph, causing the HLE trampoline to store a real MediaHle object that is dereferenced at PLAY, but Release zeroes +8 so vtable[6] becomes NULL. This specific media playback lifecycle defect was identified in Phase 1 of the research and is documented in the source comparison between Zeebulator and Zeemu HLE coverage (2026-08-31).  
+Zeebulator models the guest's own sound‑channel object graph, causing the HLE trampoline to store a real MediaHle object that is dereferenced at PLAY, but Release zeroes +8 so vtable[6] becomes NULL.
+This specific media playback lifecycle defect was identified in Phase 1 of the research and is documented in the source comparison between Zeebulator and Zeemu HLE coverage (2026-08-31).  
 Resposta: Zeebulator models the guest's own sound‑channel object graph, causing the HLE trampoline to store a real MediaHle object that is dereferenced at PLAY, but Release zeroes +8 so vtable[6] becomes NULL | The source comparison between Zeebulator and Zeemu HLE coverage (2026-08-31).
 
 ## ggz-formato (43s)
 
-ggzbrewtools is a full clone of Tuxality’s GGZ packer/unpacker for the BREW and Zeebo platforms (supporting DMC Dante x Vergil, Sonic BREW, and Double Dragon). It is implemented in C++17 with Boost libraries. | research/sources/ggzbrewtools
+ggzbrewtools is a full clone of Tuxality’s GGZ packer/unpacker for the BREW and Zeebo platforms (supporting DMC Dante x Vergil, Sonic BREW, and Double Dragon). It is implemented in C++17 with Boost libraries.
+| research/sources/ggzbrewtools
 
 ## zeeno-status (30s)
 

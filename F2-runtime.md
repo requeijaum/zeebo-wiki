@@ -1,27 +1,27 @@
-# F2 — runtime AEE [EM CURSO]
-## [CONF] leitura direta `core/brew/mod_runtime.h` (clone, 14/09)
-- .mod RVCT ROPI: `AEEStaticMod_New` calcula load addr via PC-relativo, lê ptr 4B antes,
-  chama slot 0x68 (MALLOC nSize+16=IModuleVtbl) — bate com AEEModGen.c.
-- Slot 0x6c = FREE (path cleanup `AEEApplet_New`).
-- Slot 0xc0 = `ISHELL_CreateInstance` via contexto ambient (138 call sites no DD real);
-  contexto+12 = IShell, +20 = IDisplay (SetClipRect slot 18), +0x2c = objeto relativo-vtable desconhecido (Peggle).
-- `SetShellInstance/SetDisplayInstance/SetThirdContextObject` injetam os ptrs.
+# F2 — AEE Runtime [IN PROGRESS]
+## [CONF] direct read of `core/brew/mod_runtime.h` (clone, 09-14)
+- .mod RVCT ROPI: `AEEStaticMod_New` computes its load address via PC-relative addressing,
+  reads a pointer 4B before it, then calls the slot at 0x68 (MALLOC nSize+16=IModuleVtbl) — matches AEEModGen.c.
+- Slot 0x6c = FREE (the `AEEApplet_New` cleanup path).
+- Slot 0xc0 = `ISHELL_CreateInstance` via ambient context (138 call sites in the real DD);
+  context+12 = IShell, +20 = IDisplay (SetClipRect slot 18), +0x2c = unknown relative-vtable object (Peggle).
+- `SetShellInstance/SetDisplayInstance/SetThirdContextObject` inject the pointers.
 ## [CONF] `core/brew/hle_runtime.h`
-- Ponte bidirecional: trap sentinela (call-out guest->HLE, vtable aponta p/ sentinela,
-  `Register/ RegisterLabeled` p/ log de slot não implementado) + `CallArmFunction`
-  (HLE->guest: AEEMod_Load, CreateInstance, HandleEvent, roda até retorno, AAPCS R0-R3).
-- `CallArmFunctionPreservingContext` p/ callbacks síncronos (ex: ISQL::Exec row).
-## [CONF] `core/brew/ishell.h` — dispatch START + timer
-- `CreateInstance` real: singletons conhecidos + factories (ex: IDisplay); demais slots stub.
-- `SetTimer/CancelTimer` reais, one-shot: jogo re-arma a cada frame (`SetTimer(16ms, cb)` no
-  `HandleEvent(EVT_APP_START)` real do DD) — loop cooperativo fica no host.
-- `SetAppletHandleEvent(fn)` guarda HandleEvent real do guest p/ despacho de eventos.
-## [CONF] Confronto bug full-rewrite (ROADMAP.md UPDATE 13/14, fork canônico)
-- Sintoma: DD agenda UM timer 16ms (cb=0x11c074) no START, depois busy-wait em GetUpTimeMS
-  sem Sleep/yield → continuação START nunca retorna → timer nunca dispara.
-- Tentado: ZEEB_UPTIME_YIELD (cede mas re-entra SEM passar no tick externo → 0 ticks),
-  ZEEB_TIMER_PREEMPT=1 (salva contexto, roda timer devido como shell faria, restaura).
-- Contrato SDK (brew-sim-recon, headers públicos AEEShell/AEECallback): cooperativo + retorno;
-  loop per-frame vive na fila de timers do shell, re-armado a cada frame — idêntico ao
-  contrato do clone (`ishell.h`). Diagnóstico e direção do fix convergem. [CONF]
-- Estado: fix pendente de validação (AUTOPRESS ainda gated). Próximo: validar PREEMPT no DD.
+- Two-way bridge: sentinel traps (guest→HLE call-outs, vtable points at sentinel,
+  `Register/RegisterLabeled` for unimplemented-slot logging) + `CallArmFunction`
+  (HLE→guest: AEEMod_Load, CreateInstance, HandleEvent, runs to return, AAPCS R0-R3).
+- `CallArmFunctionPreservingContext` for synchronous callbacks (e.g. ISQL::Exec rows).
+## [CONF] `core/brew/ishell.h` — START dispatch + timer
+- `CreateInstance` is real: known singletons + factories (e.g. IDisplay); other slots stubbed.
+- `SetTimer/CancelTimer` are real, one-shot: the game re-arms every frame (`SetTimer(16ms, cb)` inside
+  the real DD `HandleEvent(EVT_APP_START)`) — the cooperative loop lives on the host.
+- `SetAppletHandleEvent(fn)` stores the guest's real HandleEvent for event dispatch.
+## [CONF] Bug confrontation (ROADMAP.md UPDATE 13/14, parked fork)
+- Symptom: DD schedules ONE 16ms timer (cb=0x11c074) at START, then busy-waits on GetUpTimeMS
+  with no Sleep/yield → START continuation never returns → timer never fires.
+- Tried: ZEEB_UPTIME_YIELD (yields but re-enters WITHOUT the outer tick → 0 ticks),
+  ZEEB_TIMER_PREEMPT=1 (save context, run due timers as the shell would, restore).
+- SDK contract (brew-sim-recon, public AEEShell/AEECallback headers): cooperative + returning;
+  the per-frame loop lives in the shell timer queue, re-armed each frame — identical to
+  the clone contract (`ishell.h`). Diagnosis and fix direction converge. [CONF]
+- State: fix pending validation on DD (AUTOPRESS still gated).

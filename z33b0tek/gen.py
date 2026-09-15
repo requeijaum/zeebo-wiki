@@ -27,7 +27,7 @@ def inline(s):
     s = re.sub(r"`([^`]+)`", r"<code>\1</code>", s)
     s = re.sub(r"\*\*([^*]+)\*\*", r"<b>\1</b>", s)
     s = re.sub(r"\[CONF[^\]]*\]", lambda m: f'<span class="bdg conf">{html.escape(m.group(0))}</span>', s)
-    for tag, cls in [("[INCERTO]","unc"),("[EM CURSO]","wip"),("PARKED","unc")]:
+    for tag, cls in [("[INCERTO]","unc"),("[EM CURSO]","wip"),("[IN PROGRESS]","wip"),("PARKED","unc")]:
         s = s.replace(html.escape(tag), f'<span class="bdg {cls}">{tag}</span>')
     return s
 def md2html(text):

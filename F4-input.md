@@ -1,9 +1,9 @@
-# F4 — input [EM CURSO]
-## [CONF] fork `testkit/shadow_inc/` (15/09)
-- Sombras IHID p/ testes: AEEIHID.(IDL/H), AEEIHIDDevice.(IDL/H), RawDevice, Keyboard/Mouse/Joystick.
-- Origem SDK; uso: fixtures de teste, não runtime.
-## [CONF] `hid_hle.cpp` clone (15/09)
-- Botão: RegisterForButtonEvent, GetNextButtonEvent. Device: CreateDevice, GetDeviceInfo.
-- Conexão: GetNextConnectEvent, GetConnectedDevices. Host injeta via `UpdateState(ZPadState)`.
-## Pendente
-- Runtime HID fork; Z-Wheel (F4b); UIDs d-pad (4 UIDs, etapa 8).
+# F4 — Input [IN PROGRESS]
+## [CONF] parked-fork `testkit/shadow_inc/` (09-15)
+- IHID shadows for tests: AEEIHID.(IDL/H), AEEIHIDDevice.(IDL/H), RawDevice, Keyboard/Mouse/Joystick.
+- SDK origin; fixtures only, not runtime.
+## [CONF] `hid_hle.cpp` clone (09-15)
+- Buttons: RegisterForButtonEvent, GetNextButtonEvent. Devices: CreateDevice, GetDeviceInfo.
+- Connection: GetNextConnectEvent, GetConnectedDevices. Host injects via `UpdateState(ZPadState)`.
+## Pending
+- Fork runtime HID; Z-Wheel (F4b); d-pad UIDs.
