@@ -2,6 +2,7 @@
 import pathlib, re, html, time
 W = pathlib.Path(__file__).parent.parent
 OUT = pathlib.Path(__file__).parent / "site"
+OUT.mkdir(parents=True, exist_ok=True)
 PAGES = ["F0-matriz.md","F1-loader.md","F2-runtime.md","F3-brew.md","F4-input.md","F4b-oem-zwheel.md",
  "F5-video.md","F6-audio.md","F7-jogos.md","F8-frontends.md","MATRIZ-ALVO-infuse.md","LACUNAS.md",
  "CONFRONTO-fork.md","memory/ABI-conf.md","memory/F0-fatos.md","ESCOPO-NAO.md","AGENTS.md","skill-impact.md","STATUS.md","VTABLE-IShell.md","VTABLE-IDisplay.md","HW-regmap.md","HW-syscalls.md","TEC-pcsx2-dolphin.md","TEC-ymir-ares-higan.md","TEC-prior-art.md","TEC-lessons.md","TEC-cpu.md","INDEX.md"]
