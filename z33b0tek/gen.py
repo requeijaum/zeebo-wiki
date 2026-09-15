@@ -3,9 +3,11 @@ import pathlib, re, html, time
 W = pathlib.Path(__file__).parent.parent
 OUT = pathlib.Path(__file__).parent / "site"
 OUT.mkdir(parents=True, exist_ok=True)
-PAGES = ["F0-matriz.md","F1-loader.md","F2-runtime.md","F3-brew.md","F4-input.md","F4b-oem-zwheel.md",
- "F5-video.md","F6-audio.md","F7-jogos.md","F8-frontends.md","MATRIZ-ALVO-infuse.md","LACUNAS.md",
- "CONFRONTO-fork.md","memory/ABI-conf.md","memory/F0-fatos.md","ESCOPO-NAO.md","AGENTS.md","skill-impact.md","STATUS.md","VTABLE-IShell.md","VTABLE-IDisplay.md","HW-regmap.md","HW-syscalls.md","TEC-pcsx2-dolphin.md","TEC-ymir-ares-higan.md","TEC-prior-art.md","TEC-lessons.md","TEC-cpu.md","INDEX.md"]
+PAGES = ["F1-loader.md","F2-runtime.md","F3-brew.md","F4-input.md","F4b-oem-zwheel.md",
+ "F5-video.md","F6-audio.md","F7-jogos.md","F8-frontends.md","MATRIZ-ALVO-infuse.md",
+ "VTABLE-IShell.md","VTABLE-IDisplay.md","HW-regmap.md","HW-syscalls.md",
+ "TEC-lessons.md","TEC-cpu.md","TEC-pcsx2-dolphin.md","TEC-ymir-ares-higan.md","TEC-prior-art.md",
+ "memory/ABI-conf.md"]
 TITLES = {"F0-matriz.md":"F0 Coverage Matrix","F1-loader.md":"F1 Loader (GGZ/BAR/MIF/MOD)",
  "F2-runtime.md":"F2 AEE Runtime","F3-brew.md":"F3 Core BREW","F4-input.md":"F4 Input (HID)",
  "F4b-oem-zwheel.md":"F4b OEM Z-Wheel","F5-video.md":"F5 Video (GLES/Raster)",
@@ -14,6 +16,12 @@ TITLES = {"F0-matriz.md":"F0 Coverage Matrix","F1-loader.md":"F1 Loader (GGZ/BAR
  "CONFRONTO-fork.md":"Fork confronto (parked)","memory/ABI-conf.md":"ABI Facts",
  "memory/F0-fatos.md":"F0 Facts","ESCOPO-NAO.md":"Non-scope","AGENTS.md":"Conventions",
  "skill-impact.md":"Skill Impact Log","STATUS.md":"Status","VTABLE-IShell.md":"VTable IShell (49 slots)","VTABLE-IDisplay.md":"VTable IDisplay","HW-regmap.md":"HW MSM7201A Regmap (LLE)"}
+def scrub(s):
+    s = s.replace("/home/rafaelfrequiao/projects/","")
+    s = s.replace("/home/rafaelfrequiao/","")
+    s = re.sub(r"\(FONTE[^)]*\)", "", s)
+    s = re.sub(r"FONTE:?\s*", "", s)
+    return s
 def inline(s):
     s = html.escape(s)
     s = re.sub(r"`([^`]+)`", r"<code>\1</code>", s)
@@ -23,6 +31,7 @@ def inline(s):
         s = s.replace(html.escape(tag), f'<span class="bdg {cls}">{tag}</span>')
     return s
 def md2html(text):
+    text = scrub(text)
     out, lines, i, n2, h2n = [], text.splitlines(), 0, 0, 0
     incode, inul = False, False
     while i < len(lines):
@@ -74,11 +83,10 @@ code{background:#eee;padding:0 4px;font:13px monospace}pre{background:#111;color
 footer{font-size:12px;color:#666;border-top:1px solid #999;margin-top:30px;padding-top:6px}
 @media(max-width:800px){.wrap{grid-template-columns:1fr}nav{position:static}}"""
 (OUT/"style.css").write_text(CSS)
-GROUPS = [("Fases",["F0-matriz.md","F1-loader.md","F2-runtime.md","F3-brew.md","F4-input.md","F4b-oem-zwheel.md","F5-video.md","F6-audio.md","F7-jogos.md","F8-frontends.md"]),
- ("HW",["HW-regmap.md","HW-syscalls.md"]),("Tabelas SDK",["VTABLE-IShell.md","VTABLE-IDisplay.md","memory/ABI-conf.md","memory/F0-fatos.md"]),
- ("Alvos",["MATRIZ-ALVO-infuse.md","LACUNAS.md","STATUS.md"]),
- ("TEC",["TEC-lessons.md","TEC-cpu.md","TEC-pcsx2-dolphin.md","TEC-ymir-ares-higan.md","TEC-prior-art.md"]),
- ("Processo",["AGENTS.md","skill-impact.md","ESCOPO-NAO.md","CONFRONTO-fork.md"])]
+GROUPS = [("Fases",["F1-loader.md","F2-runtime.md","F3-brew.md","F4-input.md","F4b-oem-zwheel.md","F5-video.md","F6-audio.md","F7-jogos.md","F8-frontends.md"]),
+ ("HW",["HW-regmap.md","HW-syscalls.md"]),("Tabelas SDK",["VTABLE-IShell.md","VTABLE-IDisplay.md","memory/ABI-conf.md"]),
+ ("Alvos",["MATRIZ-ALVO-infuse.md","LACUNAS.md"]),
+ ("TEC",["TEC-lessons.md","TEC-cpu.md","TEC-pcsx2-dolphin.md","TEC-ymir-ares-higan.md","TEC-prior-art.md"])]
 def _link(p): return f'<a href="{p.replace("/","_").replace(".md",".html")}">{TITLES.get(p,p)}</a>'
 nav = "".join(f"<b>{g}</b>" + "".join(_link(p) for p in ps if p in PAGES) for g, ps in GROUPS)
 for p in PAGES:
