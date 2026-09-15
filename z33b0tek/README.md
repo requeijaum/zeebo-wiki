@@ -9,6 +9,7 @@ Adreno 130), written for emulator developers and hardware hackers.
 |---|---|
 | `pages/*.md` | source of truth for the published site |
 | `tools/gen_interfaces.py` | regenerates vtable tables from public SDK headers |
+| `tools/reflow.py` | keeps sources in one-sentence-per-line form |
 | `tools/audit.py` | enforces the house standard on `pages/` |
 | `gen.py` | builds `site/` and lints the output |
 | `site/` | generated HTML, not committed |
@@ -16,7 +17,8 @@ Adreno 130), written for emulator developers and hardware hackers.
 ## Build
 
 ```sh
-python3 tools/audit.py pages        # standard check, exits 1 on violation
+python3 tools/reflow.py --check pages/*.md   # one-sentence-per-line check
+python3 tools/audit.py pages                 # standard check, exits 1 on violation
 python3 gen.py                      # build site/, exits 1 on leaked identifier
 python3 -m http.server -d site 8000
 ```
@@ -32,10 +34,11 @@ Enforced by `tools/audit.py`:
 |---|---|
 | R1 | one H1 per page |
 | R2 | an intro of at least two lines before the first section |
-| R3 | every section has at least six lines (evidence lines exempt) |
-| R4 | prose wraps at 100 characters (tables and code exempt) |
+| R3 | every section has at least three content lines and 60 words |
+| R4 | prose stays under 180 characters (tables and code exempt) |
 | R5 | generated blocks are filled, not left empty |
 | R6 | no private or third-party identifiers |
+| R7 | one sentence per line: prose lines end a sentence |
 
 ## Content rules
 

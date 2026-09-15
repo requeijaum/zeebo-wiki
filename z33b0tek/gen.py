@@ -60,33 +60,82 @@ def inline(s):
     s = html.escape(s)
     s = re.sub(r"`([^`]+)`", r"<code>\1</code>", s)
     s = re.sub(r"\*\*([^*]+)\*\*", r"<b>\1</b>", s)
+    s = re.sub(r"(?<![\w\*])_([^_]+)_(?![\w\*])", r"<i>\1</i>", s)
     s = re.sub(r"\[CONF[^\]]*\]", lambda m: f'<span class="bdg conf">{html.escape(m.group(0))}</span>', s)
     for tag, cls in [("[INCERTO]","unc"),("[EM CURSO]","wip"),("[IN PROGRESS]","wip"),("PARKED","unc")]:
         s = s.replace(html.escape(tag), f'<span class="bdg {cls}">{tag}</span>')
     return s
 def md2html(text, fn=""):
+    """Markdown subset renderer.
+
+    Consecutive prose lines join into one paragraph, and wrapped lines inside a
+    list item stay inside that item. Tables, fenced code, headings and inline
+    tags are handled explicitly.
+    """
     text = drop_sections(fn, text)
     text = scrub(text)
-    out, lines, i, n2, h2n = [], text.splitlines(), 0, 0, 0
-    incode, inul = False, False
+    out = []
+    i, n = 0, 0
+    h2n = 0
+    para = []
+    items = []          # finished list items
+    cur = None          # current list item buffer
+    in_code = False
+
+    def flush_para():
+        if para:
+            out.append("<p>" + inline(" ".join(para)) + "</p>")
+            para.clear()
+
+    def flush_list():
+        nonlocal cur
+        if cur is not None:
+            items.append(" ".join(cur))
+            cur = None
+        if items:
+            out.append("<ul>" + "".join(f"<li>{inline(x)}</li>" for x in items) + "</ul>")
+            items.clear()
+
+    def flush_all():
+        flush_para(); flush_list()
+
+    lines = text.splitlines()
     while i < len(lines):
         ln = lines[i]
+
+        if ln.strip().startswith("<!--"):
+            flush_all()
+            i += 1
+            continue
         if ln.strip().startswith("```"):
-            out.append("</ul>" if inul else ""); inul = False
-            out.append("<pre><code>" if not incode else "</code></pre>")
-            incode = not incode; i += 1; continue
-        if incode:
-            out.append(html.escape(ln)); i += 1; continue
+            flush_all()
+            out.append("<pre><code>" if not in_code else "</code></pre>")
+            in_code = not in_code
+            i += 1
+            continue
+        if in_code:
+            out.append(html.escape(ln))
+            i += 1
+            continue
+
         if re.match(r"^#{1,3} ", ln):
-            if inul: out.append("</ul>"); inul = False
-            lv = len(ln.split(" ")[0]); title = inline(ln.strip("# "))
-            slug = re.sub(r"[^a-z0-9]+","-",re.sub(r"<[^>]+>","",title).lower()).strip("-")
-            if lv == 2: n2 += 1; h2n = 0; out.append(f"<h2 id=\"s{n2}-{slug}\">{n2}. {title}</h2>")
-            elif lv == 3: h2n += 1; out.append(f"<h3 id=\"s{n2}-{h2n}-{slug}\">{n2}.{h2n} {title}</h3>")
-            else: out.append(f"<p><i>{title}</i></p>")
-            i += 1; continue
-        if ln.strip().startswith("|") and i+1 < len(lines) and re.match(r"^\|?[\s:\-|]+\|?$", lines[i+1]):
-            if inul: out.append("</ul>"); inul = False
+            flush_all()
+            lv = len(ln.split(" ")[0])
+            title = inline(ln.strip("# "))
+            slug = re.sub(r"[^a-z0-9]+", "-", re.sub(r"<[^>]+>", "", title).lower()).strip("-")
+            if lv == 2:
+                n += 1; h2n = 0
+                out.append(f'<h2 id="s{n}-{slug}">{n}. {title}</h2>')
+            elif lv == 3:
+                h2n += 1
+                out.append(f'<h3 id="s{n}-{h2n}-{slug}">{n}.{h2n} {title}</h3>')
+            else:
+                pass  # the page template prints the H1
+            i += 1
+            continue
+
+        if ln.strip().startswith("|") and i + 1 < len(lines) and re.match(r"^\|?[\s:\-|]+\|?$", lines[i + 1]):
+            flush_all()
             cells = [inline(c.strip()) for c in ln.strip().strip("|").split("|")]
             out.append("<table><tr>" + "".join(f"<th>{c}</th>" for c in cells) + "</tr>")
             i += 2
@@ -94,18 +143,37 @@ def md2html(text, fn=""):
                 cells = [inline(c.strip()) for c in lines[i].strip().strip("|").split("|")]
                 out.append("<tr>" + "".join(f"<td>{c}</td>" for c in cells) + "</tr>")
                 i += 1
-            out.append("</table>"); continue
-        if re.match(r"^[-*] ", ln.strip()):
-            if not inul: out.append("<ul>"); inul = True
-            out.append(f"<li>{inline(re.sub(r'^[-*] ','',ln.strip()))}</li>")
-            i += 1; continue
+            out.append("</table>")
+            continue
+
         if not ln.strip():
-            if inul: out.append("</ul>"); inul = False
-            i += 1; continue
-        if inul: out.append("</ul>"); inul = False
-        out.append(f"<p>{inline(ln.strip())}</p>"); i += 1
-    if inul: out.append("</ul>")
+            if cur is not None:
+                flush_list()
+            flush_para()
+            i += 1
+            continue
+
+        m = re.match(r"^(\s*)[-*] +(.*)$", ln)
+        if m:
+            flush_para()
+            if cur is not None:
+                items.append(" ".join(cur))
+            cur = [m.group(2).strip()]
+            i += 1
+            continue
+
+        if cur is not None:
+            cur.append(ln.strip())
+            i += 1
+            continue
+
+        para.append(ln.strip())
+        i += 1
+
+    flush_all()
     return "\n".join(out)
+
+
 CSS = """body{background:#fff;color:#000;font:14px/1.5 Georgia,"Times New Roman",serif;margin:0}
 a{color:#00c}a:visited{color:#848}header{background:#000;color:#fff;padding:8px 16px;font-family:Verdana,Arial,sans-serif}header b{color:#ff3}
 a{color:#00c}header{background:#222;color:#eee;padding:10px 18px}header b{color:#fc3}

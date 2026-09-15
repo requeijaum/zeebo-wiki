@@ -1,9 +1,8 @@
 # IDisplay Interface
 
-IDisplay is the drawing surface. Text, rectangles, bitmaps and DIB allocation all
-pass through this interface. It is not a GPU abstraction: it is the 2D surface a
-title paints before any OpenGL work, and many titles use it for menus, HUD and
-loading screens.
+IDisplay is the drawing surface.
+Text, rectangles, bitmaps and DIB allocation all pass through this interface.
+It is not a GPU abstraction: it is the 2D surface a title paints before any OpenGL work, and many titles use it for menus, HUD and loading screens.
 
 ## Vtable layout
 
@@ -41,7 +40,7 @@ Base slots: **IBase → IDisplay**, so slot 0 is the first method of IBase and t
 | 24 | CreateDIBitmapEx | int | this, IDIB **ppIDIB, int nDepth, int nHeight, int nWidth, int nPaletteSize, int cbExtra |
 | 25 | SetPrefs | int | this, const char *pchSettings, int cSettings |
 
-- SetClipRect is slot 18, confirmed by the header, by two independent implementations and by a real game disassembly.
+- SetClipRect is slot 18, confirmed by the header, by two independent implementations and by a real game disassembly. 
 <!-- END GENERATED: IDisplay -->
 
 ## Drawing model
@@ -59,15 +58,19 @@ Base slots: **IBase → IDisplay**, so slot 0 is the first method of IBase and t
 
 ## Surface flow
 
-1. The shell creates a display for the applet and passes it in the start event.
-2. The title allocates bitmaps with CreateDIBitmap or CreateDIBitmapEx.
-3. The title draws with DrawText, DrawRect and BitBlt.
-4. SetDestination redirects drawing to a bitmap, for example for an offscreen
-   buffer, and GetDestination reads the current target.
-5. Update presents the result.
+1.
+The shell creates a display for the applet and passes it in the start event.
+2.
+The title allocates bitmaps with CreateDIBitmap or CreateDIBitmapEx.
+3.
+The title draws with DrawText, DrawRect and BitBlt.
+4.
+SetDestination redirects drawing to a bitmap, for example for an offscreen buffer, and GetDestination reads the current target.
+5.
+Update presents the result.
 
-Some titles never call Update directly. They draw into a bitmap that the render
-path reads, so a runtime that only presents on Update will show nothing.
+Some titles never call Update directly.
+They draw into a bitmap that the render path reads, so a runtime that only presents on Update will show nothing.
 
 ## Bitmap and font interfaces
 
@@ -109,16 +112,13 @@ Base slots: **IQI → IFont**, so slot 0 is the first method of IQI and the firs
 
 ## Notes for implementers
 
-- SetClipRect is slot 18. It is the single most-called display method in some
-  titles, and getting the slot wrong silently corrupts drawing rather than
-  crashing.
-- GetDeviceBitmap hands back a reference the caller must release, so the reference
-  count of the returned bitmap matters.
-- DrawText takes a background rectangle and flags. Titles use the flags to draw
-  shadowed or inverted text, so ignoring them produces readable but visibly wrong
-  UI.
-- DIB colour depth matters. A runtime that always allocates 32-bit surfaces
-  breaks titles that blit 8-bit palettised data with BitBlt.
+- SetClipRect is slot 18.
+  It is the single most-called display method in some titles, and getting the slot wrong silently corrupts drawing rather than crashing.
+- GetDeviceBitmap hands back a reference the caller must release, so the reference count of the returned bitmap matters. 
+- DrawText takes a background rectangle and flags.
+  Titles use the flags to draw shadowed or inverted text, so ignoring them produces readable but visibly wrong UI.
+- DIB colour depth matters.
+  A runtime that always allocates 32-bit surfaces breaks titles that blit 8-bit palettised data with BitBlt.
 
-Evidence: slots and signatures from the public SDK header. Expected sequence from
-real titles and from the SDK sample sources.
+Evidence: slots and signatures from the public SDK header.
+Expected sequence from real titles and from the SDK sample sources.

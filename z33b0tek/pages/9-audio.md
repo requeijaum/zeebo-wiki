@@ -1,8 +1,7 @@
 # Audio: Media, Sound and the Mixer
 
-Audio is where a superficially working emulator is most often silent. Titles do
-not play a fixed set of resources: they create a media object for the format they
-need, feed it data, and expect a callback when playback finishes.
+Audio is where a superficially working emulator is most often silent.
+Titles do not play a fixed set of resources: they create a media object for the format they need, feed it data, and expect a callback when playback finishes.
 
 ## Media classes
 
@@ -23,9 +22,9 @@ Class IDs in the media range, from the SDK class table:
 | 0x01005510 | MEDIASAF | service audio format |
 | 0x01005511 | MEDIAPCM | raw PCM |
 
-Titles query these by class ID through ISHELL_CreateInstance. A runtime that
-implements only PCM will fail the creation for every other class; a runtime that
-implements creation but not playback produces a title that runs and stays silent.
+Titles query these by class ID through ISHELL_CreateInstance.
+A runtime that implements only PCM will fail the creation for every other class;
+a runtime that implements creation but not playback produces a title that runs and stays silent.
 
 ## Interfaces
 
@@ -88,16 +87,15 @@ Base slots: **IBase → ISound**, so slot 0 is the first method of IBase and the
 | 6 | Stop, Pause and Resume as the title requires |
 | 7 | The runtime ticks the object and fires the callback at completion |
 
-The notification is not optional bookkeeping. Many titles wait for it before
-raising a load barrier or starting the next track, so a runtime that never fires
-it leaves the title on a menu that looks frozen.
+The notification is not optional bookkeeping.
+Many titles wait for it before raising a load barrier or starting the next track, so a runtime that never fires it leaves the title on a menu that looks frozen.
 
 ## PCM path
 
-- Uncompressed audio arrives as 16-bit signed PCM.
-- MMD_BUFFER carries the sample pointer and a byte size.
-- An odd byte size for 16-bit PCM is an error worth logging; it usually means the
-  title used the wrong parameter.
+- Uncompressed audio arrives as 16-bit signed PCM. 
+- MMD_BUFFER carries the sample pointer and a byte size. 
+- An odd byte size for 16-bit PCM is an error worth logging;
+  it usually means the title used the wrong parameter.
 
 | Field | Meaning | Common mistake |
 |---|---|---|
@@ -107,8 +105,8 @@ it leaves the title on a menu that looks frozen.
 
 Two checks worth making early, because both produce silence rather than an error:
 
-- Whether the buffer lives in guest memory that the title later overwrites. A
-  runtime that copies lazily will read stale samples.
+- Whether the buffer lives in guest memory that the title later overwrites.
+  A runtime that copies lazily will read stale samples.
 - Whether the title expects the callback before or after the buffer is released.
   Releasing too early yields truncated audio at the end of every effect.
 
@@ -122,11 +120,9 @@ Two checks worth making early, because both produce silence rather than an error
 | Rate | assets are not uniformly one rate, so the mixer must resample per voice |
 | Level | volume and pan are per channel and set by the title |
 
-Observed failure mode: a title keeps its own channel objects and stores a media
-pointer at channel+0x28, expecting the object at +8 to remain valid. If the
-runtime clears that field on release and the title then calls play, the call
-walks a null vtable slot. Both sides of that contract must be modelled, and the
-release path is the one that is usually wrong.
+Observed failure mode: a title keeps its own channel objects and stores a media pointer at channel+0x28, expecting the object at +8 to remain valid.
+If the runtime clears that field on release and the title then calls play, the call walks a null vtable slot.
+Both sides of that contract must be modelled, and the release path is the one that is usually wrong.
 
 ## What a runtime must actually decode
 
@@ -137,19 +133,15 @@ release path is the one that is usually wrong.
 | MIDI | sequenced music with a sound bank | silence, or noise if a raw dump is played |
 | PCM | short effects and streams | minimal, this is the easy case |
 
-Declaring that a runtime has no decoder is honest, but it is not a compatibility
-claim. Titles that reach gameplay with no audio at all are a common intermediate
-state, and the reason is almost always a missing decoder rather than a broken
-mixer.
+Declaring that a runtime has no decoder is honest, but it is not a compatibility claim.
+Titles that reach gameplay with no audio at all are a common intermediate state, and the reason is almost always a missing decoder rather than a broken mixer.
 
 ## Mixing and output
 
-- The mixer receives a format, a rate and a buffer of interleaved stereo samples.
-- Sample rate travels with each push, because nothing guarantees that all assets
-  of a title share one rate.
-- The host backend converts to the device rate, not the other way round.
-- A soundfont synthesizer is required for MIDI titles, and the bank must ship
-  with the runtime.
+- The mixer receives a format, a rate and a buffer of interleaved stereo samples. 
+- Sample rate travels with each push, because nothing guarantees that all assets of a title share one rate. 
+- The host backend converts to the device rate, not the other way round. 
+- A soundfont synthesizer is required for MIDI titles, and the bank must ship with the runtime. 
 
-Evidence: class IDs and interface layouts from the public SDK headers. Channel
-object behaviour and the completion notification from real title traces.
+Evidence: class IDs and interface layouts from the public SDK headers.
+Channel object behaviour and the completion notification from real title traces.

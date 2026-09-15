@@ -8,13 +8,15 @@ Rules enforced:
   R4 prose lines are wrapped at MAX_LINE characters
   R5 no empty generated blocks (markers must be filled)
   R6 no forbidden identifiers anywhere in a page
+  R7 one sentence per line: prose lines end with terminal punctuation
 
 Exit code 1 on any violation.
 """
 import pathlib, re, sys
 
-MIN_SECTION_LINES = 6
-MAX_LINE = 100
+MIN_SECTION_LINES = 3
+MIN_SECTION_WORDS = 60
+MAX_LINE = 180
 SKIP_WRAP_PREFIXES = ("|", "```", "<!--", "_Generated", "Base slots:", "- `", "#")
 FORBIDDEN = [
     r"(?i)zeebulator", r"(?i)zeemu", r"(?i)infuse\b", r"(?i)zeebx", r"(?i)curupira",
@@ -22,6 +24,27 @@ FORBIDDEN = [
     r"(?i)\bclone\b", r"(?i)\bbateria\b", r"(?i)game_probe", r"(?i)pcsx2|dolphin|higan|ymir|dynarmic",
     r"(?i)skill-impact|confronto|phase8|roadmap", r"(?i)compat-list", r"\bFONTE\b",
 ]
+
+
+TABLE_SEP = re.compile(r"^\|[\s:\-|]+\|?$")
+
+
+def section_words(body):
+    """Words in prose plus table cells. Code fences are ignored."""
+    words, fence = 0, False
+    for ln in body:
+        if ln.strip().startswith("```"):
+            fence = not fence
+            continue
+        if fence or not ln.strip():
+            continue
+        if ln.startswith("|"):
+            if TABLE_SEP.match(ln):
+                continue
+            words += len(ln.strip().strip("|").replace("|", " ").split())
+        else:
+            words += len(ln.split())
+    return words
 
 
 def sections(lines):
@@ -33,6 +56,26 @@ def sections(lines):
             cur[1].append(ln)
     out.append(cur)
     return out
+
+
+SENT_END = (".", "!", "?", ":", ";", ")")
+SKIP_LINE = ("#", "|", "```", "<!--", ">", "_Generated", "Base slots:")
+
+
+def sentence_break_issues(lines):
+    errs, fence = [], False
+    for i, ln in enumerate(lines, 1):
+        s = ln.strip()
+        if s.startswith("```"):
+            fence = not fence
+            continue
+        if fence or not s:
+            continue
+        if s.startswith(SKIP_LINE) or any(k in ln for k in ("_Generated from", "Base slots:")):
+            continue
+        if not s.endswith(SENT_END):
+            errs.append(f"R7: line {i} does not end a sentence: {s[:56]}")
+    return errs
 
 
 def check(path: pathlib.Path):
@@ -47,11 +90,12 @@ def check(path: pathlib.Path):
     if len(intro) < 2:
         errs.append(f"R2: intro has {len(intro)} lines")
     for name, body in secs[1:]:
-        n = len([l for l in body if l.strip()])
+        n = len([l for l in body if l.strip() and not TABLE_SEP.match(l)])
         if name.lower().startswith("evidence"):
             continue
-        if n < MIN_SECTION_LINES:
-            errs.append(f"R3: section '{name[:40]}' has {n} lines")
+        words = section_words(body)
+        if n < MIN_SECTION_LINES or words < MIN_SECTION_WORDS:
+            errs.append(f"R3: section '{name[:40]}' has {n} lines / {words} words")
     gen_ranges = [(m.start(), m.end()) for m in
                   re.finditer(r"<!-- BEGIN GENERATED.*?<!-- END GENERATED[^>]*-->", txt, re.S)]
     pos = 0
@@ -66,6 +110,7 @@ def check(path: pathlib.Path):
         if len(m.group(2).strip()) < 40:
             errs.append(f"R5: generated block {m.group(1)} is empty")
     scan = re.sub(r"<!-- BEGIN GENERATED.*?<!-- END GENERATED[^>]*-->", "", txt, flags=re.S)
+    errs.extend(sentence_break_issues(lines))
     for pat in FORBIDDEN:
         mm = re.search(r"(?s).{0,50}" + pat.replace("(?i)", "") + r".{0,50}", scan, re.I)
         if mm:

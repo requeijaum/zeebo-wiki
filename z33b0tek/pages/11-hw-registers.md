@@ -1,9 +1,8 @@
 # Hardware: MSM7201A Register Map
 
-The MSM7201A has no public datasheet. Everything on this page comes from running
-the bootloader under emulation and modelling each register until the boot
-advanced, so the values are what the boot code expects to read back, not what a
-vendor document states.
+The MSM7201A has no public datasheet.
+Everything on this page comes from running the bootloader under emulation and modelling each register until the boot advanced.
+The values are therefore what the boot code expects to read back, not what a vendor document states.
 
 ## Interrupt controller, 0xc0000000
 
@@ -14,9 +13,15 @@ vendor document states.
 | +0xb0 | write | 0xffffffff | mask all |
 | +0xb4 | write | 0xffffffff | mask all |
 
-Initialisation only, with no polling. Plain sticky registers are sufficient. The
-kernel later programs individual sources; the watchdog and timer interrupts are
-the ones that matter for scheduling.
+Initialisation only, with no polling, so plain sticky registers are sufficient for the bootloader stage.
+
+Delivery matters more than the register model once the kernel is running:
+
+- Sources are acknowledged individually, and an unacknowledged source refires forever and starves everything else. 
+- Delivery must round-robin between sources.
+  Serving strictly in numeric order starves the display interrupt behind the timer, and the screen freezes while the kernel keeps running.
+- The two interrupts that decide whether the system looks alive are the timer, which drives scheduling, and the display controller, which drives the panel.
+  A model that gets everything else right but starves either one produces a system that boots and then appears hung.
 
 ## Clock and PLL controller, 0xc0100000
 
@@ -26,8 +31,8 @@ the ones that matter for scheduling.
 | +0x104 | handshake and status for +0x100; boot writes 2, reads 2, writes 3, reads 3 |
 | +0x008 | enable latch; read 0, then write 1 |
 
-The handshake register must reflect the written value. If it does not, the PLL
-programming loop never converges and the boot hangs before any driver loads.
+The handshake register must reflect the written value.
+If it does not, the PLL programming loop never converges and the boot hangs before any driver loads.
 
 ## Multi-channel block, 0xa9700000
 
@@ -39,14 +44,13 @@ Status registers use a per-channel stride of 4.
 | +0xc50 + channel*4 | secondary status |
 | +0xf10 + channel*4 | configuration and acknowledge; boot writes 2 |
 
-The correct return value is 0x1. Returning 0xffffffff trips the ERROR bit and the
-boot aborts, which is a useful reminder that reads of undocumented status
-registers are usually bitfield tests, not opaque values.
+The correct return value is 0x1.
+Returning 0xffffffff trips the ERROR bit and the boot aborts, which is a useful reminder that reads of undocumented status registers are usually bitfield tests, not opaque values.
 
 ## Boot failure sink
 
-Address 0xc30 contains a branch to itself. Reaching it means a boot check failed
-before any driver loaded.
+Address 0xc30 contains a branch to itself.
+Reaching it means a boot check failed before any driver loaded.
 
 Two properties make it useful rather than merely annoying:
 
@@ -56,13 +60,12 @@ Two properties make it useful rather than merely annoying:
 | Each modelled register pushes the halt later | a change in the halt address proves the model change had an effect |
 
 The halt address is therefore the primary progress metric for early boot work.
-Advancing it from 0xc30 to the next stage is evidence; a run that reaches the same
-address twice, with no other observable change, is not.
+Advancing it from 0xc30 to the next stage is evidence;
+a run that reaches the same address twice, with no other observable change, is not.
 
-A second, subtler lesson: reads of undocumented status registers are usually
-bitfield tests rather than opaque values. A model that returns all ones passes a
-"non-zero means ready" check and trips an error bit elsewhere. Returning the
-smallest plausible value, such as a single ready bit, is the safer default.
+A second, subtler lesson: reads of undocumented status registers are usually bitfield tests rather than opaque values.
+A model that returns all ones passes a "non-zero means ready" check and trips an error bit elsewhere.
+Returning the smallest plausible value, such as a single ready bit, is the safer default.
 
 ## Kernel bring-up peripherals
 
@@ -79,12 +82,10 @@ smallest plausible value, such as a single ready bit, is the safer default.
 
 Two details that cost time if missed:
 
-- Interrupt delivery must round-robin. Serving strictly in numeric order starves
-  the MDP interrupt behind the timer, and the display stops updating while the
-  kernel keeps running.
-- The EHCI port status register must report a connected, enabled device, and the
-  port reset must complete on read. Otherwise the host controller driver never
-  binds and no input device appears.
+- Interrupt delivery must round-robin.
+  Serving strictly in numeric order starves the MDP interrupt behind the timer, and the display stops updating while the kernel keeps running.
+- The EHCI port status register must report a connected, enabled device, and the port reset must complete on read.
+  Otherwise the host controller driver never binds and no input device appears.
 
 ## Storage and memory management
 
@@ -95,9 +96,8 @@ Two details that cost time if missed:
 | NAND read | PAGE_READ matches byte for byte against a real dump |
 | MMU entries | 150 real ARM11 virtual to physical mappings |
 
-MMU layout observed: peripherals at 0xc0000000, RAM identity mapped, and coarse
-entries in the 0xb0xxx range resolving into 0x100a3xxx. A translation table taken
-from hardware removes the guesswork that usually dominates early boot work.
+MMU layout observed: peripherals at 0xc0000000, RAM identity mapped, and coarse entries in the 0xb0xxx range resolving into 0x100a3xxx.
+A translation table taken from hardware removes the guesswork that usually dominates early boot work.
 
 ## Dual-core layout
 
@@ -106,8 +106,17 @@ from hardware removes the guesswork that usually dominates early boot work.
 | Core 0 | applications processor | ARM1136J-S, ARMv6, ARM and Thumb-1 | 528 MHz |
 | Core 1 | modem and baseband | ARM926EJ-S running AMSS on REX | 256 MHz |
 
-Game code runs on core 0 only. Core 1 matters for firmware boot and for services
-that titles call indirectly, such as network and telemetry.
+Game code runs on core 0 only, so a title-focused emulator can leave core 1 unmodelled for a long time.
+
+| Question | Title-focused runtime | Firmware boot |
+|---|---|---|
+| Core 0 CPU | required | required |
+| Core 0 MMU and caches | required | required |
+| Core 1 CPU | not required to run a title | required |
+| Core 1 services | only those a title calls indirectly | required |
+
+The services a title can reach indirectly are networking, telemetry and clock synchronisation.
+A title that calls one of them will hang waiting for a reply that never comes, so those stubs are worth having even in a title-focused build.
 
 ## Timer behaviour
 
@@ -118,10 +127,10 @@ that titles call indirectly, such as network and telemetry.
 | Guest uptime query | monotonic, advanced by the runtime |
 | Frame cadence in titles | 16 ms timer re-armed by the title |
 
-The uptime query deserves care. If it never advances, titles that use it as a
-frame clock spin forever. If it advances with wall-clock time instead of emulated
-time, titles run at the wrong speed.
+The uptime query deserves care.
+If it never advances, titles that use it as a frame clock spin forever.
+If it advances with wall-clock time instead of emulated time, titles run at the wrong speed.
 
-Evidence: register behaviour from bootloader bring-up under emulation; MMU and
-NAND values from hardware dumps; peripheral map from a Linux 3.4.113 bring-up
-harness.
+Evidence: register behaviour from bootloader bring-up under emulation;
+MMU and NAND values from hardware dumps;
+peripheral map from a Linux 3.4.113 bring-up harness.

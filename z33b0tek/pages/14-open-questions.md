@@ -1,7 +1,7 @@
 # Open Questions
 
-Each item states what is unknown and what evidence would close it. Nothing here
-should be presented as settled behaviour.
+Each item states what is unknown and what evidence would close it.
+Nothing here should be presented as settled behaviour.
 
 ## Container formats
 
@@ -11,9 +11,8 @@ should be presented as settled behaviour.
 | What is the full MIF layout beyond its strings? | a documented module information file with a resource table whose offsets are confirmed independently |
 | Are there other container types in the library? | a survey of shipped titles listing every extension and its magic bytes |
 
-The MIF gap is the most consequential, because the shell reads module information
-to build the store list. Without resource tables, a runtime can name a title but
-cannot resolve its icon or its launch parameters from the file itself.
+The MIF gap is the most consequential, because the shell reads module information to build the store list.
+Without resource tables, a runtime can name a title but cannot resolve its icon or its launch parameters from the file itself.
 
 ## Runtime
 
@@ -24,8 +23,7 @@ cannot resolve its icon or its launch parameters from the file itself.
 | How does a module that mixes ARM and Thumb behave under a JIT? | a title whose entry path crosses instruction sets, traced at the transition |
 | What is the exact applet teardown order on forced exit? | a title that allocates in start and frees in stop, with the calls logged |
 
-The timer policy question is the one that most often decides whether a title
-reaches gameplay or stalls at its first frame.
+The timer policy question is the one that most often decides whether a title reaches gameplay or stalls at its first frame.
 
 ## Video
 
@@ -36,8 +34,7 @@ reaches gameplay or stalls at its first frame.
 | What does the surface manipulation interface do at slot 4? | a live object reached through QueryInterface, with the call traced |
 | Which fragment states are load-bearing for real titles? | per-title runs that enumerate the states each title sets |
 
-The extension question matters because assuming a fixed extension set produces
-subtle rendering differences rather than obvious failures.
+The extension question matters because assuming a fixed extension set produces subtle rendering differences rather than obvious failures.
 
 ## Audio
 
@@ -49,8 +46,8 @@ subtle rendering differences rather than obvious failures.
 | Whether the sound bank ships with titles or with the firmware | a survey of installed applications listing which ones carry a bank and which rely on a shared one |
 | What happens when a title requests a class the runtime refuses | a title run with creation forced to fail, checking whether it degrades or stalls |
 
-The decoder question is the practical one. A runtime can be correct in every
-observable way and still be judged broken because the music does not play.
+The decoder question is the practical one.
+A runtime can be correct in every observable way and still be judged broken because the music does not play.
 
 ## Storage
 
@@ -62,16 +59,13 @@ observable way and still be judged broken because the music does not play.
 | What does the shell do when free space is reported as zero? | a title run with the free-space query returning zero, watching whether it degrades or refuses to start |
 | Are there paths that only the OEM application can read? | a direct read attempt against each documented prefix, from title context |
 
-Keeping that boundary explicit prevents the most expensive kind of scope creep:
-building a full storage stack for titles that only need a directory tree.
+Keeping that boundary explicit prevents the most expensive kind of scope creep: building a full storage stack for titles that only need a directory tree.
 
 ## Method
 
 Two habits keep this list useful rather than decorative:
 
-- Every unknown gets a named artefact that would close it. An entry without one is
-  a wish, not a question.
-- Every claim elsewhere in this reference is either a public SDK fact, a
-  measurement from a real binary or dump, or is labelled as unconfirmed. When a
-  claim is refuted, it moves here as a resolved item with the refutation recorded,
-  so the same wrong answer is not rediscovered.
+- Every unknown gets a named artefact that would close it.
+  An entry without one is a wish, not a question.
+- Every claim elsewhere in this reference is either a public SDK fact, a measurement from a real binary or dump, or is labelled as unconfirmed.
+  When a claim is refuted, it moves here as a resolved item with the refutation recorded, so the same wrong answer is not rediscovered.

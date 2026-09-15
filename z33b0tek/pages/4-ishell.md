@@ -1,9 +1,8 @@
 # IShell Interface
 
-IShell is the shell object and the root of the object graph. A title receives a
-shell pointer at start and rarely talks to anything else directly. Object
-creation, applet control, timers, resources, dialogs and system notification all
-go through this interface.
+IShell is the shell object and the root of the object graph.
+A title receives a shell pointer at start and rarely talks to anything else directly.
+Object creation, applet control, timers, resources, dialogs and system notification all go through this interface.
 
 ## Vtable layout
 
@@ -67,7 +66,7 @@ Base slots: **IBase → IShell**, so slot 0 is the first method of IBase and the
 | 50 | Reset | int | this, AEEResetType resettype |
 | 51 | AppIsInGroup | int | this, AEECLSID idApp, AEECLSID idGroup |
 
-- IShell inherits IBase directly, so its first own method is slot 2.
+- IShell inherits IBase directly, so its first own method is slot 2. 
 <!-- END GENERATED: IShell -->
 
 ## Slots by purpose
@@ -90,23 +89,23 @@ Base slots: **IBase → IShell**, so slot 0 is the first method of IBase and the
 
 ## Resource loading
 
-Resource calls are the boundary between the runtime and the game's archives. Two
-shapes exist:
+Resource calls are the boundary between the runtime and the game's archives.
+Two shapes exist:
 
-- LoadResData and LoadResString take a resource file name and a resource ID.
-- LoadResDataEx adds a caller-provided buffer and a length out-parameter, so a
-  title can read a resource without the runtime allocating.
+- LoadResData and LoadResString take a resource file name and a resource ID. 
+- LoadResDataEx adds a caller-provided buffer and a length out-parameter, so a title can read a resource without the runtime allocating. 
 
-The archive the name refers to is the container the loader mounted. A title does
-not see file paths for resources inside an archive; it sees IDs.
+The archive the name refers to is the container the loader mounted.
+A title does not see file paths for resources inside an archive;
+it sees IDs.
 
 ## Timer semantics
 
-- SetTimer is one-shot. The callback is removed after it fires.
-- The callback receives the user pointer supplied at registration.
-- GetTimerExpiration lets a title read the remaining time, which some titles use
-  as a frame clock.
-- CancelTimer matches on callback pointer plus user pointer, not on an ID.
+- SetTimer is one-shot.
+  The callback is removed after it fires.
+- The callback receives the user pointer supplied at registration. 
+- GetTimerExpiration lets a title read the remaining time, which some titles use as a frame clock. 
+- CancelTimer matches on callback pointer plus user pointer, not on an ID. 
 
 | Property | Consequence for a runtime |
 |---|---|
@@ -115,21 +114,24 @@ not see file paths for resources inside an archive; it sees IDs.
 | Millisecond delay | the delay is a request, not a guarantee of that exact spacing |
 | No preemption guarantee | due timers may not run while a callback is still executing |
 
-That last row is the one that decides whether a title reaches gameplay. If the
-runtime waits for the current callback to return before servicing due timers, a
-title that busy-waits inside its own callback never sees its frame timer fire.
+That last row is the one that decides whether a title reaches gameplay.
+If the runtime waits for the current callback to return before servicing due timers, a title that busy-waits inside its own callback never sees its frame timer fire.
 
 ## What breaks first
 
 Three failures account for most bring-up stalls at this interface:
 
-1. CreateInstance returns success but writes a null pointer. The title later
-   dereferences it and the fault appears somewhere unrelated.
-2. Timers are scheduled but never serviced. The title renders once and freezes.
-3. LoadResData returns a buffer whose length field is wrong. The title reads past
-   the end or truncates an image silently.
+1.
+CreateInstance returns success but writes a null pointer.
+The title later dereferences it and the fault appears somewhere unrelated.
+2.
+Timers are scheduled but never serviced.
+The title renders once and freezes.
+3.
+LoadResData returns a buffer whose length field is wrong.
+The title reads past the end or truncates an image silently.
 
 ## Evidence
 
-Slot numbers and method signatures come from the public SDK header. The
-classification by purpose is a reading aid, not part of the ABI.
+Slot numbers and method signatures come from the public SDK header.
+The classification by purpose is a reading aid, not part of the ABI.

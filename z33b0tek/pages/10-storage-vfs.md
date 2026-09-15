@@ -1,8 +1,7 @@
 # Storage and the VFS Namespace
 
-Titles never see host paths. Every file access goes through the VFS, which
-presents a flat namespace built from the firmware partitions plus per-application
-directories.
+Titles never see host paths.
+Every file access goes through the VFS, which presents a flat namespace built from the firmware partitions plus per-application directories.
 
 ## Path space
 
@@ -16,9 +15,9 @@ directories.
 
 Observed naming rules:
 
-- Module directories use the decimal app ID, for example fs:/mod/274755/.
-- Private directories use a tilde followed by the class ID in hex.
-- Metadata files are named by app ID, for example fs:/mif/274755.mif.
+- Module directories use the decimal app ID, for example fs:/mod/274755/. 
+- Private directories use a tilde followed by the class ID in hex. 
+- Metadata files are named by app ID, for example fs:/mif/274755.mif. 
 
 ## Interfaces
 
@@ -86,9 +85,8 @@ Base slots: **IBase → IFile**, so slot 0 is the first method of IBase and the 
 ## Firmware-level storage
 
 Below the VFS, the device uses EFS2, a Qualcomm filesystem layered on NAND.
-Firmware boot requires a NAND controller model and the EFS2 structures. Running
-a title does not: a title only needs the VFS view of the files its archives and
-its private directory contain.
+Firmware boot requires a NAND controller model and the EFS2 structures.
+Running a title does not: a title only needs the VFS view of the files its archives and its private directory contain.
 
 | Layer | Needed to boot firmware | Needed to run a title |
 |---|---|---|
@@ -98,15 +96,12 @@ its private directory contain.
 | Archive mounting (GGZ, BAR) | no | yes |
 | Module information (MIF) | no | yes for the shell UI |
 
-Keeping that boundary explicit prevents the most expensive kind of scope creep:
-building a full storage stack for titles that only need a directory tree.
+Keeping that boundary explicit prevents the most expensive kind of scope creep: building a full storage stack for titles that only need a directory tree.
 
 ## Journal and recovery
 
-The firmware keeps a journal for crash recovery. A loader that mounts a
-filesystem image should tolerate a journal that was not cleanly closed, because
-dumps taken from a live device rarely are.
+The firmware keeps a journal for crash recovery.
+A loader that mounts a filesystem image should tolerate a journal that was not cleanly closed, because dumps taken from a live device rarely are.
 
-Evidence: path rules and interface layouts from the SDK headers and from the
-firmware filesystem image. Layer boundary from the observed behaviour of titles
-that never touch the raw filesystem.
+Evidence: path rules and interface layouts from the SDK headers and from the firmware filesystem image.
+Layer boundary from the observed behaviour of titles that never touch the raw filesystem.

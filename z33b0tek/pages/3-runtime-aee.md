@@ -1,11 +1,11 @@
 # AEE Runtime Contract
 
-BREW applications are event-driven modules. They do not own a main loop, do not
-create threads for normal work, and do not talk to a host operating system. Every
-interaction with the outside world goes through an object interface.
+BREW applications are event-driven modules.
+They do not own a main loop, do not create threads for normal work, and do not talk to a host operating system.
+Every interaction with the outside world goes through an object interface.
 
-Get this contract right and titles boot. Get it wrong and they hang in ways that
-look like graphics bugs.
+Get this contract right and titles boot.
+Get it wrong and they hang in ways that look like graphics bugs.
 
 ## Module lifecycle
 
@@ -18,9 +18,7 @@ look like graphics bugs.
 | 5 | IApplet::HandleEvent | the runtime drives the title from here on |
 | 6 | EVT_APP_STOP | the runtime retires the applet |
 
-Calls in both directions follow the ARM AAPCS: the first four 32-bit arguments
-travel in R0 to R3, further arguments go on the stack, and the return value comes
-back in R0.
+Calls in both directions follow the ARM AAPCS: the first four 32-bit arguments travel in R0 to R3, further arguments go on the stack, and the return value comes back in R0.
 
 ## Interfaces involved in the lifecycle
 
@@ -74,9 +72,9 @@ Objects are created with ISHELL_CreateInstance(shell, ClsId, &ppobj).
 | 3 | ECLASSNOTSUPPORT, the runtime does not implement that class |
 | 20 | EUNSUPPORTED, a different and rarer failure |
 
-The distinction matters. A runtime that returns 0 while writing a null pointer
-produces a crash deep inside the title, far from the real cause. Returning 3 is
-both honest and survivable: titles branch on it.
+The distinction matters.
+A runtime that returns 0 while writing a null pointer produces a crash deep inside the title, far from the real cause.
+Returning 3 is both honest and survivable: titles branch on it.
 
 ## Events
 
@@ -102,8 +100,8 @@ The applet receives events through HandleEvent(app, eCode, wParam, dwParam).
 | EVT_APP_START_WINDOW | 0x14 |
 | EVT_APP_LAST_EVENT | = EVT_APP_START_WINDOW |
 
-Note that EVT_APP_START is 0, not 1. Fixtures that assume 1 break the first
-dispatch and produce a title that paints nothing.
+Note that EVT_APP_START is 0, not 1.
+Fixtures that assume 1 break the first dispatch and produce a title that paints nothing.
 
 Start flags arrive in wParam of EVT_APP_START:
 
@@ -113,45 +111,48 @@ Start flags arrive in wParam of EVT_APP_START:
 | AEE_START_RESTART | 0x2 | restarted after a suspend failure or for memory recovery |
 | AEE_START_SSAVER | 0x4 | launched as screen saver |
 
-Suspend and resume are part of normal operation, not an error path. A title may
-be suspended while a timer is pending, and it must not assume that wall-clock
-time advanced while it was stopped.
+Suspend and resume are part of normal operation, not an error path.
+A title may be suspended while a timer is pending, and it must not assume that wall-clock time advanced while it was stopped.
 
 ## System notifications
 
-Components can register a one-shot callback for system-level events through
-ISHELL_RegisterSystemCallback.
+Components can register a one-shot callback for system-level events through ISHELL_RegisterSystemCallback.
 
-| Type | Value |
-|---|---|
-| AEE_SCB_AEE_INIT | 0 |
-| AEE_SCB_AEE_EXIT | 1 |
-| AEE_SCB_LOW_RAM | 2 |
-| AEE_SCB_LOW_STORAGE | 3 |
-| AEE_SCB_APP_CLOSED | 4 |
-| AEE_SCB_MOD_UNLOAD | 5 |
-| AEE_SCB_DEVICE_INFO_CHANGED | 6 |
-| AEE_SCB_LOW_RAM_CRITICAL | 7 |
-| AEE_SCB_APP_EXIT | 8 |
+| Type | Value | Meaning |
+|---|---|---|
+| AEE_SCB_AEE_INIT | 0 | the environment finished starting |
+| AEE_SCB_AEE_EXIT | 1 | the environment is shutting down |
+| AEE_SCB_LOW_RAM | 2 | memory is low but still usable |
+| AEE_SCB_LOW_STORAGE | 3 | storage is nearly full |
+| AEE_SCB_APP_CLOSED | 4 | another applet finished |
+| AEE_SCB_MOD_UNLOAD | 5 | a module is being unloaded |
+| AEE_SCB_DEVICE_INFO_CHANGED | 6 | cached device information is stale |
+| AEE_SCB_LOW_RAM_CRITICAL | 7 | memory is critically low |
+| AEE_SCB_APP_EXIT | 8 | the current applet is exiting |
 
-The callback is one-shot. If a component wants to keep receiving the event, it
-re-registers from inside the callback.
+Delivery rules a runtime has to respect:
 
+- The callback runs on the shell's own thread in the cooperative model, so it must not be invoked reentrantly from inside another callback.
+- A registration made while a callback is running takes effect for the next event, not for the one being delivered.
+- The user data pointer supplied at registration is passed back unchanged. 
+- The registration is consumed by the first delivery. 
+
+The low-memory pair is the one worth implementing early.
+A title that receives the non-critical notification frees optional buffers and keeps running, while a title that receives the critical one may drop its cache entirely.
+A runtime that fires neither leaves titles holding memory they would otherwise release, which matters on a device with 160 MB of total RAM.
 ## Timers and the frame loop
 
-- ISHELL_SetTimer schedules a one-shot callback after a delay in milliseconds.
-- Timers are not periodic. The registered callback fires once and is removed.
-- A game that needs a frame loop re-arms the timer from inside its own callback.
-- A typical frame delay is 16 ms, which is about 60 frames per second.
-- Consequence: the frame loop lives in the shell's timer queue, not in the game.
-- Consequence: if the runtime never services the timer queue, the title renders
-  nothing, no matter how correct its drawing code is.
+- ISHELL_SetTimer schedules a one-shot callback after a delay in milliseconds. 
+- Timers are not periodic.
+  The registered callback fires once and is removed.
+- A game that needs a frame loop re-arms the timer from inside its own callback. 
+- A typical frame delay is 16 ms, which is about 60 frames per second. 
+- Consequence: the frame loop lives in the shell's timer queue, not in the game. 
+- Consequence: if the runtime never services the timer queue, the title renders nothing, no matter how correct its drawing code is. 
 
-A common failure pattern: the title starts, schedules exactly one timer, then
-busy-waits on a time query instead of returning. If the runtime waits for the
-callback to return before running due timers, the timer never fires and the
-session stalls with a live but idle title. Servicing due timers independently of
-the current callback is what keeps such a title alive.
+A common failure pattern: the title starts, schedules exactly one timer, then busy-waits on a time query instead of returning.
+If the runtime waits for the callback to return before running due timers, the timer never fires and the session stalls with a live but idle title.
+Servicing due timers independently of the current callback is what keeps such a title alive.
 
 ## Memory and I/O
 
@@ -162,32 +163,27 @@ the current callback is what keeps such a title alive.
 | Text output | IDisplay | no stdio at all |
 | Time | ISysTimer and the shell uptime query | no host clock exposure |
 
-There is no stdio, and C++ global constructors do not run automatically. A module
-that relies on a static constructor to initialise state will find that state
-zeroed.
+There is no stdio, and C++ global constructors do not run automatically.
+A module that relies on a static constructor to initialise state will find that state zeroed.
 
 ## Application processor ABI notes
 
-Real module code compiled with ARM RVCT read-only position independence expects a
-static base convention. The observed shape in real game code:
+Real module code compiled with ARM RVCT read-only position independence expects a static base convention.
+The observed shape in real game code:
 
-- The module computes its own load address through PC-relative addressing.
-- A pointer is read from four bytes before that address.
-- A function pointer at offset 0x68 of the pointed structure is called with a
-  byte count and returns a pointer. This matches the module allocation of
-  nSize + sizeof(IModuleVtbl), where IModuleVtbl is four function pointers.
-- Offset 0x6c holds the matching free function, used on the cleanup path.
-- Offset 0xc0 returns an ambient application context. The most used field of that
-  context sits at +12 and yields the IShell pointer that helper macros use when
-  they do not take a shell argument. A sibling field at +20 holds the current
-  IDisplay.
+- The module computes its own load address through PC-relative addressing. 
+- A pointer is read from four bytes before that address. 
+- A function pointer at offset 0x68 of the pointed structure is called with a byte count and returns a pointer.
+  This matches the module allocation of nSize + sizeof(IModuleVtbl), where IModuleVtbl is four function pointers.
+- Offset 0x6c holds the matching free function, used on the cleanup path. 
+- Offset 0xc0 returns an ambient application context.
+  The most used field of that context sits at +12 and yields the IShell pointer that helper macros use when they do not take a shell argument.
+  A sibling field at +20 holds the current IDisplay.
 
-Counts measured on one commercial title: 138 distinct call sites read the static
-base and index the table. The ambient context at +0xc0 is by far the most used.
+Counts measured on one commercial title: 138 distinct call sites read the static base and index the table.
+The ambient context at +0xc0 is by far the most used.
 
-Practical consequence: a runtime must supply these context slots before the first
-draw call, or the title dereferences a null through a path that is hard to trace.
+Practical consequence: a runtime must supply these context slots before the first draw call, or the title dereferences a null through a path that is hard to trace.
 
-Evidence: event values, flags, notification types and method order from the
-public SDK headers. Static base behaviour from disassembly of a real commercial
-module.
+Evidence: event values, flags, notification types and method order from the public SDK headers.
+Static base behaviour from disassembly of a real commercial module.

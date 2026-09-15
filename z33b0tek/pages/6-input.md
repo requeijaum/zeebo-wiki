@@ -1,8 +1,8 @@
 # Input: IHID, IHIDDevice, ISignal
 
-Input is not a fixed API on this platform. Titles open HID devices and subscribe
-to button or axis events, then poll them from their own timer callback. There is
-no global input state a title can read at any time.
+Input is not a fixed API on this platform.
+Titles open HID devices and subscribe to button or axis events, then poll them from their own timer callback.
+There is no global input state a title can read at any time.
 
 ## Interfaces
 
@@ -64,25 +64,20 @@ Base slots: **IQI → ISignal**, so slot 0 is the first method of IQI and the fi
 | 3 | Set | int | this |
 <!-- END GENERATED: ISignal -->
 
-Note the inheritance difference: IHID and IHIDDevice inherit IQI and therefore
-start at slot 3, while ISignal also inherits IQI. Interfaces that inherit IBase,
-such as IShell and IDisplay, start at slot 2. Mixing the two up shifts every slot
-by one and produces calls that appear to work but act on the wrong method.
+Note the inheritance difference: IHID and IHIDDevice inherit IQI and therefore start at slot 3, while ISignal also inherits IQI.
+Interfaces that inherit IBase, such as IShell and IDisplay, start at slot 2.
+Mixing the two up shifts every slot by one and produces calls that appear to work but act on the wrong method.
 
 ## Button identifiers
 
 Buttons are identified by 32-bit UIDs, not by a dense enum.
 
-- Measured on five commercial titles, game code embeds only the base UID and
-  derives the others arithmetically.
-- The observed shape is: subtract the base, compare against a small count, then
-  index a jump table of inline branch instructions.
-- Base UID measured: 0x0106c3fe.
-- The d-pad occupies four consecutive UIDs: 0x0106c3fe, 0x0106c3ff, 0x0106c400
-  and 0x0106c401.
-- Consequence: there is no single d-pad button. A runtime that reports one
-  composite direction value leaves titles that poll individual UIDs with no input
-  at all.
+- Measured on five commercial titles, game code embeds only the base UID and derives the others arithmetically. 
+- The observed shape is: subtract the base, compare against a small count, then index a jump table of inline branch instructions. 
+- Base UID measured: 0x0106c3fe. 
+- The d-pad occupies four consecutive UIDs: 0x0106c3fe, 0x0106c3ff, 0x0106c400 and 0x0106c401. 
+- Consequence: there is no single d-pad button.
+  A runtime that reports one composite direction value leaves titles that poll individual UIDs with no input at all.
 
 Two jump-table encodings appear in real code and behave differently:
 
@@ -102,11 +97,23 @@ Two jump-table encodings appear in real code and behave differently:
 | Rumble | exposed through the device interface |
 | Hot plug | connect and disconnect events are reported |
 
+A runtime has to supply three things for input to work at all:
+
+1.
+A device table that answers enumeration, including the second pad.
+Titles that expect two players read the table before they draw their menus.
+2.
+Button events keyed by UID rather than by index, matching the arithmetic the title performs on the base UID.
+3.
+Connect and disconnect events, because some titles wait for a connect event before they start accepting button input at all.
+
+The third item is the one most often missed.
+The pad is present, the buttons work, and the title still ignores input because it is waiting for a connection notification that never arrives.
+
 ## Testing approach
 
-The SDK ships interface definition files for the HID interfaces. They are good
-fixture material: a fake device can be driven from them without touching real
-hardware, and the same fixtures make input behaviour reproducible in CI.
+The SDK ships interface definition files for the HID interfaces.
+They are good fixture material: a fake device can be driven from them without touching real hardware, and the same fixtures make input behaviour reproducible in CI.
 
 | Fixture | What it exercises |
 |---|---|
@@ -117,9 +124,8 @@ hardware, and the same fixtures make input behaviour reproducible in CI.
 
 Two practices that keep input tests honest:
 
-- Drive the fake device through the same event queue the real path uses. A test
-  that sets a global input state proves nothing about event delivery.
-- Assert on the guest-visible effect, not on the runtime's internal state. An
-  input test that passes while the title ignores the input has proved the wrong
-  thing.
+- Drive the fake device through the same event queue the real path uses.
+  A test that sets a global input state proves nothing about event delivery.
+- Assert on the guest-visible effect, not on the runtime's internal state.
+  An input test that passes while the title ignores the input has proved the wrong thing.
 

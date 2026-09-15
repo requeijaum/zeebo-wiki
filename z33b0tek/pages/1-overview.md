@@ -2,11 +2,9 @@
 
 The Zeebo is a 2009 home console built from a Qualcomm handset platform.
 
-It has no fixed-function game hardware. Titles are ordinary BREW applications
-that draw through OpenGL ES and read input through the HID interfaces, on top of
-a mobile operating environment. That single fact drives every decision in this
-reference: emulating the console means implementing a software platform, not a
-register-level graphics chip.
+It has no fixed-function game hardware.
+Titles are ordinary BREW applications that draw through OpenGL ES and read input through the HID interfaces, on top of a mobile operating environment.
+That single fact drives every decision in this reference: emulating the console means implementing a software platform, not a register-level graphics chip.
 
 ## Hardware summary
 
@@ -27,13 +25,17 @@ register-level graphics chip.
 
 From the bottom up:
 
-1. OKL4 2.1.1, a microkernel built from the L4e lineage.
-2. REX, the real-time executive that hosts the modem and bootstrap tasks.
-3. BREW 4.0.2, the application environment that titles are written against.
-4. Zeebo OEM layers, which add the store UI, gamepad handling and extra classes.
+1.
+OKL4 2.1.1, a microkernel built from the L4e lineage.
+2.
+REX, the real-time executive that hosts the modem and bootstrap tasks.
+3.
+BREW 4.0.2, the application environment that titles are written against.
+4.
+Zeebo OEM layers, which add the store UI, gamepad handling and extra classes.
 
-A title never sees the microkernel. It sees BREW object interfaces, so the
-practical emulation boundary is the BREW API surface.
+A title never sees the microkernel.
+It sees BREW object interfaces, so the practical emulation boundary is the BREW API surface.
 
 ## How a title runs
 
@@ -47,9 +49,9 @@ practical emulation boundary is the BREW API surface.
 | 6 | The title schedules a timer and returns control |
 | 7 | Each timer callback draws a frame and re-arms the timer |
 
-Steps 6 and 7 are the important ones. There is no thread inside the title and no
-frame loop owned by the title. The frame loop is a timer queue owned by the
-runtime, and the title re-arms it from inside its own callback.
+Steps 6 and 7 are the important ones.
+There is no thread inside the title and no frame loop owned by the title.
+The frame loop is a timer queue owned by the runtime, and the title re-arms it from inside its own callback.
 
 ## What this reference covers
 
@@ -63,6 +65,5 @@ runtime, and the title re-arms it from inside its own callback.
 | ABI reference | structures, class IDs, error codes |
 | Open questions | what is still unknown, and what would close it |
 
-Evidence: hardware figures come from the platform documentation that ships with
-the public SDK and from measurements taken on real dumps. Slot numbers come from
-the SDK headers and are reproduced by the generator in `tools/`.
+Evidence: hardware figures come from the platform documentation that ships with the public SDK and from measurements taken on real dumps.
+Slot numbers come from the SDK headers and are reproduced by the generator in `tools/`.
