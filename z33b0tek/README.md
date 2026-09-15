@@ -5,24 +5,42 @@ Adreno 130), written for emulator developers and hardware hackers.
 
 ## Layout
 
-- `pages/*.md` — source of truth for the published site. Plain markdown.
-- `tools/gen_vtables.py` — regenerates the IShell and IDisplay vtable pages from
-  public BREW SDK headers.
-- `gen.py` — builds `site/` from `pages/`, then runs a lint that fails the build
-  if any private or third-party identifier leaks into the output.
-- `site/` — generated HTML. Not committed.
+| Path | Role |
+|---|---|
+| `pages/*.md` | source of truth for the published site |
+| `tools/gen_interfaces.py` | regenerates vtable tables from public SDK headers |
+| `tools/audit.py` | enforces the house standard on `pages/` |
+| `gen.py` | builds `site/` and lints the output |
+| `site/` | generated HTML, not committed |
 
 ## Build
 
 ```sh
-python3 gen.py
-# site/ contains the reference, index.html is the entry point
+python3 tools/audit.py pages        # standard check, exits 1 on violation
+python3 gen.py                      # build site/, exits 1 on leaked identifier
+python3 -m http.server -d site 8000
 ```
 
-## Rules
+The GitHub Actions workflow runs both checks before deploying, so a page that
+breaks the standard or leaks a private identifier never reaches the site.
+
+## House standard
+
+Enforced by `tools/audit.py`:
+
+| Rule | Requirement |
+|---|---|
+| R1 | one H1 per page |
+| R2 | an intro of at least two lines before the first section |
+| R3 | every section has at least six lines (evidence lines exempt) |
+| R4 | prose wraps at 100 characters (tables and code exempt) |
+| R5 | generated blocks are filled, not left empty |
+| R6 | no private or third-party identifiers |
+
+## Content rules
 
 - Describe the platform, never a particular emulator implementation.
-- No compatibility lists, no title matrices.
-- No local paths, no author names, no internal document names.
-- Every claim is either a public SDK fact, a measurement from a real binary or
-  firmware dump, or is marked as unverified.
+- No compatibility lists and no title matrices.
+- Good sections end with an evidence line: what the claim rests on.
+- Every unknown belongs in the open questions page with the artefact that would
+  close it.

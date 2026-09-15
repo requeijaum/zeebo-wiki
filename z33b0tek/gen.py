@@ -3,16 +3,8 @@ import pathlib, re, html, time
 W = pathlib.Path(__file__).parent / "pages"
 OUT = pathlib.Path(__file__).parent / "site"
 OUT.mkdir(parents=True, exist_ok=True)
-PAGES = ["1-loader.md","2-runtime-aee.md","3-ishell.md","4-idisplay.md","5-input.md",
- "6-oem-zwheel.md","7-video.md","8-audio.md","9-hw-regmap.md","10-hw-syscalls.md",
- "11-abi.md","12-open-questions.md"]
-TITLES = {"1-loader.md":"Loader and Container Formats",
- "2-runtime-aee.md":"AEE Runtime Contract","3-ishell.md":"IShell Interface",
- "4-idisplay.md":"IDisplay Interface","5-input.md":"Input: IHID and IHIDDevice",
- "6-oem-zwheel.md":"OEM Layer: Z-Wheel","7-video.md":"Video: EGL and OpenGL ES",
- "8-audio.md":"Audio: Media and Sound","9-hw-regmap.md":"Hardware: Register Map",
- "10-hw-syscalls.md":"Hardware: L4e Syscalls","11-abi.md":"ABI: Structures and IDs",
- "12-open-questions.md":"Open Questions"}
+PAGES = [p.name for p in sorted((W).glob("*.md"))]
+TITLES = {}
 DROPS = {"F5-video.md":["parked-fork"],"F6-audio.md":["parked fork"],
  "F4-input.md":["parked-fork"],"F4b-oem-zwheel.md":["zeebx zwheel diff"],
  "F8-frontends.md":["zeemu frontend"]}
@@ -126,11 +118,18 @@ code{background:#eee;padding:0 4px;font:13px monospace}pre{background:#111;color
 footer{font-size:12px;color:#666;border-top:1px solid #999;margin-top:30px;padding-top:6px}
 @media(max-width:800px){.wrap{grid-template-columns:1fr}nav{position:static}}"""
 (OUT/"style.css").write_text(CSS)
-GROUPS = [("Formats",["1-loader.md"]),
- ("Software",["2-runtime-aee.md","3-ishell.md","4-idisplay.md","5-input.md","6-oem-zwheel.md","7-video.md","8-audio.md"]),
- ("Hardware",["9-hw-regmap.md","10-hw-syscalls.md"]),
- ("Reference",["11-abi.md","12-open-questions.md"])]
+GROUPS = [("Start",["1-overview.md","2-loader.md"]),
+ ("Runtime",["3-runtime-aee.md","4-ishell.md","5-idisplay.md","6-input.md"]),
+ ("OEM and media",["7-oem-zwheel.md","8-video.md","9-audio.md","10-storage-vfs.md"]),
+ ("Hardware",["11-hw-registers.md","12-hw-syscalls.md"]),
+ ("Reference",["13-abi.md","14-open-questions.md"])]
 def _link(p): return f'<a href="{p.replace("/","_").replace(".md",".html")}">{TITLES.get(p,p)}</a>'
+def title_of(path):
+    for ln in (W/path).read_text().splitlines():
+        if ln.startswith("# "):
+            return ln[2:].strip()
+    return path
+TITLES = {p: title_of(p) for p in PAGES}
 nav = "".join(f"<b>{g}</b>" + "".join(_link(p) for p in ps if p in PAGES) for g, ps in GROUPS)
 for p in PAGES:
     src = W/p
@@ -142,7 +141,7 @@ for p in PAGES:
     title = TITLES.get(p,p)
     (OUT/fn).write_text(f"""<!DOCTYPE html><html><head><meta charset="utf-8"><title>z33b0tek - {title}</title><link rel="stylesheet" href="style.css"></head><body><header><b>z33b0tek</b> Zeebo (MSM7201A / BREW 4.0.2) technical reference</header><div class="wrap"><nav><a href="index.html">Index</a>{nav}</nav><main><h1>{title}</h1>{body}<footer>z33b0tek &mdash; facts tagged [CONF] verified against public SDK headers, real game binaries and firmware dumps. Generated {p}.</footer></main></div></body></html>""")
 idx = "".join(f"<h2>{g}</h2><ul>" + "".join(f'<li><a href="{p.replace("/","_").replace(".md",".html")}">{TITLES.get(p,p)}</a></li>' for p in ps if p in PAGES) + "</ul>" for g, ps in GROUPS)
-(OUT/"index.html").write_text(f"""<!DOCTYPE html><html><head><meta charset="utf-8"><title>z33b0tek - Index</title><link rel="stylesheet" href="style.css"></head><body><header><b>z33b0tek</b> Zeebo (MSM7201A / BREW 4.0.2) technical reference</header><div class="wrap"><nav><a href="index.html">Index</a>{nav}</nav><main><h1>Index</h1><p>Technical reference for the Zeebo console: Qualcomm MSM7201A, BREW 4.0.2, Adreno 130.</p><p>Sections cover container formats, the AEE runtime contract, interface vtables, input, the OEM layer, video, audio, hardware registers, kernel syscalls and open questions.</p><ul>{idx}</ul></main></div></body></html>""")
+(OUT/"index.html").write_text(f"""<!DOCTYPE html><html><head><meta charset="utf-8"><title>z33b0tek - Index</title><link rel="stylesheet" href="style.css"></head><body><header><b>z33b0tek</b> Zeebo (MSM7201A / BREW 4.0.2) technical reference</header><div class="wrap"><nav><a href="index.html">Index</a>{nav}</nav><main><h1>Index</h1><p>A technical reference for the Zeebo console: Qualcomm MSM7201A, BREW 4.0.2, Adreno 130.</p><p>Fourteen pages cover container formats, the AEE runtime contract, the shell and display interfaces, input, the OEM store layer, video, audio, storage, hardware registers, kernel syscalls, the ABI and the open questions.</p><ul>{idx}</ul></main></div></body></html>""")
 STAMP = time.strftime("%Y-%m-%d %H:%M")
 for f in OUT.glob("*.html"):
     h = f.read_text(); f.write_text(h.replace("generated, wiki is truth", f"generated {STAMP}, wiki is truth"))

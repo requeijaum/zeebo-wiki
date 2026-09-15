@@ -15,6 +15,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - run: python3 z33b0tek/tools/audit.py z33b0tek/pages
       - run: python3 z33b0tek/gen.py
       - uses: actions/upload-pages-artifact@v3
         with:
