@@ -18,3 +18,5 @@
 | HW-syscalls/HW-regmap | 15/09 | docs LLE |
 | TEC-* (5) | 15/09 | cópias c/ origem declarada |
 | MATRIZ-ALVO/LACUNAS/INDEX | 15/09 | dossiers + código |
+
+| z33b0tek (site) | 15/09 | MIF/BAR header, PAKZ, survey de contentores, extension gating |

@@ -5,14 +5,19 @@ Nothing here should be presented as settled behaviour.
 
 ## Container formats
 
+Closed 2026-09-15:
+
+- The BAR header offset 8 is the registry start; the fields at 0..28 are now confirmed (magic 0x0011, version fields, registry, index, data and end offsets). The same header serves the MIF.
+- The full MIF layout is settled: same container as the BAR (records of 8 bytes), string payloads with 0x03 / UTF-16 BOM markers, resource IDs 6/7/8 for company/author/version, possible trailing footer. Basis: 62 shipped MIF files parsed with offsets cross-checked against payload signatures.
+- Container survey of the 62-title library: PAKZ (magic PACK, LZMA_ALONE payloads), ZTEX (.tex), QX (.qxt/.qxa/.qxm), FNZ fonts, NAMCO 3D (.n3d/.nsk), BIGF/BIG4 (.big/.viv), JDLZ (.lzc), SHPM (.msh), IANN (.rwh), SWERVE/SWVARC (.m3g/.sar). The BIGF/BIG4/JDLZ/SHPM set appears only in the resource set of a single title; PAKZ is exclusive to the first-party engine family.
+
+Still open:
+
 | Question | Evidence that would close it |
 |---|---|
-| What is in the BAR sub-table at header offset 8? | a dump where that sub-table holds entries corroborated by a payload that reads them |
-| What is the full MIF layout beyond its strings? | a documented module information file with a resource table whose offsets are confirmed independently |
-| Are there other container types in the library? | a survey of shipped titles listing every extension and its magic bytes |
-
-The MIF gap is the most consequential, because the shell reads module information to build the store list.
-Without resource tables, a runtime can name a title but cannot resolve its icon or its launch parameters from the file itself.
+| Where exactly the icon and launch parameters live for the store list | a title whose MIF resource directory is walked by the shell, with the walk traced |
+| Are there further container types in unreleased or homebrew builds | any build outside the 62-title library with a new magic |
+| Does any shipped title actually read the MIF directory instead of the runtime registry for its class ID | a title whose load path is traced back to a MIF payload |
 
 ## Runtime
 

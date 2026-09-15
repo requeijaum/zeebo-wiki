@@ -89,3 +89,45 @@ AEEISysTimer.h — mesma diretório
 AEE.h — mesma diretório  
 
 Resposta: Os cabeçalhos AEE são AEEShell.h, AEEStdLib.h, AEEISysTimer.h e AEE.h — CONTRATO de API, texto público; repositório research/docs/sdk-extract/BrewMPSDK-7.12.5/.../platform/system/inc/ | Extração do README da brew-sim-recon
+
+
+## 2026-09-15 -- ronda curupira (7 commits, 583 testes, 0 regressoes)
+
+Estado da arvore `curupira/dev` (doze frentes em paralelo, mediadas em isolado):
+
+- `f992040` cpu: `Bx()` respeita o bit 0 (ARM/Thumb) na entrega de controlo do
+  hospedeiro (EVT_APP_START e callback do temporizador). Custo medido do defeito:
+  186 486 543 passos no cnk2 em arvores antigas; com o fix, 155 342.
+- `68f5238` hid: `GetConnectedDevices` recusa ou conta em vez de mentir em
+  silencio (casos 0=todos, tipo sem dispositivo, tipo fora do SDK).
+- `6c72cb5` despacho: as fases morriam aos 200 SAIDAS, nao as 200 recusas.
+  Contradicao medida ao plano: 13 fases mortas com `recusadas = 0`. Efeitos:
+  pacmania pixels 0 -> 1,45G; tekken2 -> 322M.
+- `d3d1808` vfs: contentor .pakz (PACK + LZMA_ALONE) servido. Contradicao ao
+  zeebulator-upstream: campo do nome tem 56 bytes, nao 40 (354/7487 entradas).
+- `03b7860` recursos: IShell::LoadResString serve os ids 6/7/8 do .mif (mesmo
+  contentor do .bar; marcadores 0x03 / BOM UTF-16). Desbloqueia chessbots/
+  alpineracerex/allstarcards nesse slot.
+- `043d4cf` classes: IThread de verdade (Start/Exit/Join/Suspend/GetResumeCBK).
+  IThread::Start 22 -> 0 titulos com o laco de quadros. O despacho ainda nao
+  retoma a thread (cablagem pendente).
+- `89ed30a` despacho: IFileMgr Remove/RmDir/EnumNext servidos; CreateInstance
+  com faltas nomeadas (LICENSE/MEMASTREAM/MD5Ctx/IMicro3D).
+
+Descoberta de metodo (15/09): a bateria media o ARRANQUE; com o laco de quadros
+ligado (ZB2_QUADROS=300 ZB2_EVT_START=1) a demanda real aparece (IThread::Start
+12 -> 22 titulos; tekken2 0 -> 2,15M pixels). O instrumento passou a medir jogos.
+
+Referencias novas: kaio enviou commits no zeebx (origin/master d7a73d3; o
+`park_current_thread` vive nos ramos fix-fp-threading/fix-zwheel-roller, 4038f15,
+NAO no master); GL_OES_draw_texture implementado la (machine.rs:9918, rasterizer
+draw_texture); IThread cooperativo (machine.rs:10633); IUnzipAStream inflate
+(machine.rs:1167).
+
+Analise estatica do romset (No-Intro): 65 pastas de jogo mapeadas por ID (tabela
+/tmp/estatica_tabela.txt; fonte Mobile-Zeebo-No-Intro-libretro.dat). CORRECCAO:
+11839/11840 nao sao Aladdin -- sao Kingdom Hearts V CAST (homebrew/injecao BREW,
+item 11839, builds Chapter1 e Agrabah); 12876 = swv21brew (amostra SWERVE 2.1).
+Motores: Crazyball/ttd em 17, SWERVE/Ideaworks em 2 (chessbots=Ultimate Chess 3D,
+swv21brew), NAMCO (Ridge Racer, Tekken 2), Polarbit (2), Fishlabs (3, .mp3).
+Over-the-air: .pakz so Crazyball; .tex/.fnz so a familia neo; .big/.viv so NFS.

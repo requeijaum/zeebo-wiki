@@ -55,6 +55,15 @@ A runtime that leaves a stale error value set makes a title take its fallback pa
 | Lighting and material | Materialx, Materialxv, Materialfv, Lightx, Lightxv, Lightfv, LightModelx, LightModelxv, Color4f, Color4x |
 | Misc | GetString, GetIntegerv, GetError, Finish, DrawTexxOES |
 
+## Extension gating
+
+Titles probe the extension set before initialising 3D and abandon rendering when a required name is absent.
+Measured across the library:
+
+- A group of titles checks `GL_OES_draw_texture` in `GetString(GL_EXTENSIONS)` before creating their render target; without it they stop at a clear error screen. `glDrawTex*OES` is the window-coordinate blit they use to present.
+- The Z-Wheel store UI also probes for `GL_ATI_texture_compression_atitc` before building its stage, whose textures are ATITC-compressed `.qxt` files.
+- Announcing an extension without serving its entry points makes the title call a function that does not exist; omitting a served one makes it refuse to start. The two sides must ship together.
+
 ## IGL and IEGL ABI generations
 
 Two incompatible vtables exist.

@@ -57,14 +57,16 @@ Header, 32 bytes, little-endian:
 
 | Offset | Size | Meaning |
 |---|---|---|
-| 0 | 4 | unconfirmed |
-| 4 | 4 | unconfirmed |
-| 8 | 4 | first sub-table start offset (observed value 32) |
-| 12 | 4 | first sub-table byte length |
-| 16 | 4 | real offset table start, equal to offset 8 plus length 12 |
-| 20 | 4 | real offset table entry count |
-| 24 | 4 | start of resource data, equal to the first offset entry |
-| 28 | 4 | unconfirmed |
+| 0 | 2 | container magic 0x0011 (u16); the same header serves BAR and MIF |
+| 2 | 2 | version field (observed 1) |
+| 4 | 2 | second version field (observed 1) |
+| 6 | 2 | registry record count |
+| 8 | 4 | registry start offset (observed 32) |
+| 12 | 4 | registry byte length |
+| 16 | 4 | index table start, equal to offset 8 plus length 12 |
+| 20 | 4 | index table entry count |
+| 24 | 4 | start of resource data, equal to the first index offset |
+| 28 | 2 | end offset (u16), may be followed by a footer |
 
 Entry and directory records:
 
@@ -76,17 +78,26 @@ Verification: on a real resources.bar, embedded RIFF, ID3 and PNG file signature
 
 ## Metadata: MIF
 
-The full binary layout is not understood.
-What is confirmed:
+The MIF is the same container as the BAR, with the resource directory used to name the module fields.
+Verified on 62 shipped titles, cross-checked against BAR payloads and the public SDK:
 
-- Human-readable metadata is stored as UTF-16LE strings. 
-- Each string is prefixed by a 0xFFFE byte-order mark. 
-- A string ends at a null code unit or at the next BOM. 
-- Strings can sit back to back with no separator, so a reader must scan for BOMs rather than split on nulls. 
-- This is enough to read app name, publisher and version for a library UI. 
+- Header: 30 bytes, little-endian, as the table above (magic 0x0011, two version fields, registry, index, data and end offsets).
+- Registry records are 8 bytes: type (u16), requested id (u16), unknown (u16), entry index (u16).
+- String payloads carry an encoding marker byte before the text: 0x03 for 8-bit text, 0xFF 0xFE / 0xFE 0xFF for UTF-16 with a BOM. A reader scans for markers rather than splitting on nulls.
+- Resource IDs 6, 7 and 8 are the company, author and version fields (AEEShell IDS_MIF_COMPANY/AUTHOR/VERSION).
+- Some files carry trailing bytes after the last index offset; they are a footer, not resources, and a strict reader must validate the end offset.
+- The applet class ID is not in this file: it comes from the runtime class registry or the module, not from the MIF.
 
-Still unknown: resource tables, class IDs and privilege bits.
-A loader that needs those must read them from the module or from the runtime class registry instead.
+## Asset archive: PAKZ
+
+The first-party packer writes PACK followed by LZMA_ALONE streams.
+Observed on ten resource packages across the first-party library, 7 487 index entries total:
+
+- The file opens with the magic PACK.
+- An index of 64-byte records follows; each record names an entry and carries its offset and size.
+- The name field is 56 bytes, not 40. On 354 of the 7 487 observed entries the NUL terminator falls in bytes 41-43, and the tail of the name lives in bytes 40-55; a reader that stops at 40 bytes truncates those names.
+- Each entry payload is an LZMA_ALONE stream that decompresses cleanly.
+- Index names may carry the leading directory or omit it (ani/touxiang1 vs resources/ani/touxiang1); the runtime matches both.
 
 ## What the loader must do
 
