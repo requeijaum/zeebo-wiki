@@ -190,7 +190,7 @@ GROUPS = [("Start",["1-overview.md","2-loader.md"]),
  ("Runtime",["3-runtime-aee.md","4-ishell.md","5-idisplay.md","6-input.md"]),
  ("OEM and media",["7-oem-zwheel.md","8-video.md","9-audio.md","10-storage-vfs.md"]),
  ("Hardware",["11-hw-registers.md","12-hw-syscalls.md"]),
- ("Reference",["13-abi.md","14-open-questions.md"])]
+ ("Reference",["13-abi.md","14-open-questions.md","15-online.md"])]
 def _link(p): return f'<a href="{p.replace("/","_").replace(".md",".html")}">{TITLES.get(p,p)}</a>'
 def title_of(path):
     for ln in (W/path).read_text().splitlines():
