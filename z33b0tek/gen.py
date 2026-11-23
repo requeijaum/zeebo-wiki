@@ -190,6 +190,7 @@ GROUPS = [("Start",["1-overview.md","2-loader.md"]),
  ("Runtime",["3-runtime-aee.md","4-ishell.md","5-idisplay.md","6-input.md"]),
  ("OEM and media",["7-oem-zwheel.md","8-video.md","9-audio.md","10-storage-vfs.md"]),
  ("Hardware",["11-hw-registers.md","12-hw-syscalls.md"]),
+ ("Security",["16-exploits.md"]),
  ("Reference",["13-abi.md","14-open-questions.md","15-online.md"])]
 def _link(p): return f'<a href="{p.replace("/","_").replace(".md",".html")}">{TITLES.get(p,p)}</a>'
 def title_of(path):
@@ -209,7 +210,7 @@ for p in PAGES:
     title = TITLES.get(p,p)
     (OUT/fn).write_text(f"""<!DOCTYPE html><html><head><meta charset="utf-8"><title>z33b0tek - {title}</title><link rel="stylesheet" href="style.css"></head><body><header><b>z33b0tek</b> Zeebo (MSM7201A / BREW 4.0.2) technical reference</header><div class="wrap"><nav><a href="index.html">Index</a>{nav}</nav><main><h1>{title}</h1>{body}<footer>z33b0tek &mdash; facts tagged [CONF] verified against public SDK headers, real game binaries and firmware dumps. Generated {p}.</footer></main></div></body></html>""")
 idx = "".join(f"<h2>{g}</h2><ul>" + "".join(f'<li><a href="{p.replace("/","_").replace(".md",".html")}">{TITLES.get(p,p)}</a></li>' for p in ps if p in PAGES) + "</ul>" for g, ps in GROUPS)
-(OUT/"index.html").write_text(f"""<!DOCTYPE html><html><head><meta charset="utf-8"><title>z33b0tek - Index</title><link rel="stylesheet" href="style.css"></head><body><header><b>z33b0tek</b> Zeebo (MSM7201A / BREW 4.0.2) technical reference</header><div class="wrap"><nav><a href="index.html">Index</a>{nav}</nav><main><h1>Index</h1><p>A technical reference for the Zeebo console: Qualcomm MSM7201A, BREW 4.0.2, Adreno 130.</p><p>Fourteen pages cover container formats, the AEE runtime contract, the shell and display interfaces, input, the OEM store layer, video, audio, storage, hardware registers, kernel syscalls, the ABI and the open questions.</p><ul>{idx}</ul></main></div></body></html>""")
+(OUT/"index.html").write_text(f"""<!DOCTYPE html><html><head><meta charset="utf-8"><title>z33b0tek - Index</title><link rel="stylesheet" href="style.css"></head><body><header><b>z33b0tek</b> Zeebo (MSM7201A / BREW 4.0.2) technical reference</header><div class="wrap"><nav><a href="index.html">Index</a>{nav}</nav><main><h1>Index</h1><p>A technical reference for the Zeebo console: Qualcomm MSM7201A, BREW 4.0.2, Adreno 130.</p><p>{len(PAGES)} pages cover container formats, the AEE runtime contract, the shell and display interfaces, input, the OEM store layer, video, audio, storage, hardware registers, kernel syscalls, the ABI, the security model and the open questions.</p><ul>{idx}</ul></main></div></body></html>""")
 STAMP = time.strftime("%Y-%m-%d %H:%M")
 for f in OUT.glob("*.html"):
     h = f.read_text(); f.write_text(h.replace("generated, wiki is truth", f"generated {STAMP}, wiki is truth"))
