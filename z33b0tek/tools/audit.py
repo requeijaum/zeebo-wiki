@@ -110,6 +110,8 @@ def check(path: pathlib.Path):
         if len(m.group(2).strip()) < 40:
             errs.append(f"R5: generated block {m.group(1)} is empty")
     scan = re.sub(r"<!-- BEGIN GENERATED.*?<!-- END GENERATED[^>]*-->", "", txt, flags=re.S)
+    # link de repositorio passa; handle em prosa nao
+    scan = re.sub(r"github\.com/[A-Za-z0-9_.\-]+/[A-Za-z0-9_.\-]+", "<repo-url>", scan)
     errs.extend(sentence_break_issues(lines))
     for pat in FORBIDDEN:
         mm = re.search(r"(?s).{0,50}" + pat.replace("(?i)", "") + r".{0,50}", scan, re.I)

@@ -29,6 +29,12 @@ NEUTRAL = ["direct read of the clone|source review",
  "START busy-wait \\(TIMER_PREEMPT pending\\)|START busy-wait pattern (needs preempting timer)",
  "^- Zeemu frontend.*\\n(?:^- .*\\n)?|"]
 def scrub(s):
+    # URLs de repositorio atravessam o scrub intactas: a regra de identificador
+    # (R6) continua valendo para prosa, nao para o link em si.
+    urls = []
+    def _hold(m):
+        urls.append(m.group(0)); return f"\x00U{len(urls)-1}\x00"
+    s = re.sub(r"github\.com/[A-Za-z0-9_.\-]+/[A-Za-z0-9_.\-]+", _hold, s)
     s = s.replace("/home/rafaelfrequiao/projects/","")
     s = s.replace("/home/rafaelfrequiao/","")
     s = re.sub(r"\(FONTE[^)]*\)", "", s)
@@ -45,6 +51,8 @@ def scrub(s):
     s = re.sub(r"(?i)\b(marcelo|tanisho|kaio|tuxality|requeijaum|rafaelfrequiao)\b", "[author]", s)
     s = re.sub(r"(?i)\b(bateria|comparar|sonda_[a-z]+|game_probe|brew-sim-recon)\b", "[tool]", s)
     s = re.sub(r"(?i)(TASKS|ROADMAP|PHASE8_LOG|VALIDACAO-[A-Z0-9\-]+|INDEX|MANIFEST|FINDINGS|RESUME|AUDIT_[0-9]+)\.md", "internal notes", s)
+    for i, u in enumerate(urls):
+        s = s.replace(f"\x00U{i}\x00", u)
     return s
 def drop_sections(fn, text):
     keys = DROPS.get(fn, [])
@@ -221,6 +229,8 @@ FORBIDDEN = [r"(?i)zeebulator", r"(?i)zeemu", r"(?i)infuse", r"(?i)zeebx", r"(?i
 bad = []
 for f in sorted(OUT.glob("*.html")):
     txt = f.read_text()
+    # links de repositorio sao permitidos; o handle fora da URL continua barrado
+    txt = re.sub(r"github\.com/[A-Za-z0-9_.\-]+/[A-Za-z0-9_.\-]+", "<repo-url>", txt)
     for pat in FORBIDDEN:
         m = re.search(r"(?s).{0,60}" + pat.replace("(?i)","") + r".{0,60}", txt, re.I)
         if m: bad.append(f"{f.name}: {pat} -> {m.group(0)[:110]}")

@@ -12,6 +12,9 @@
 - Sem paths locais, sem nomes de autores, sem nomes de documentos internos.
 - Cada afirmação é fato de SDK público, medição em binário/dump real, ou marcada
   como não verificada.
+- Repositórios podem ser citados pelo nome e pelo link do GitHub; a verificação
+  de identificador ignora `github.com/<owner>/<repo>` e continua barrando handle
+  em prosa, path local e nome de documento interno.
 
 ## Garantia
 `z33b0tek/gen.py` roda um lint ao final do build e falha (exit 1) se algum
