@@ -20,3 +20,4 @@
 | MATRIZ-ALVO/LACUNAS/INDEX | 15/09 | dossiers + código |
 
 | z33b0tek (site) | 15/09 | MIF/BAR header, PAKZ, survey de contentores, extension gating |
+| z33b0tek (site) — seção Security | 23/11 | firmware 1.1.2 (APPS + AMSS) e desmontagem: key gate, RDevMap device map, parser QX, superfície AT, cadeia de autocópia |
