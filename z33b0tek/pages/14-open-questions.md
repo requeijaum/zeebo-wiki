@@ -80,6 +80,23 @@ A runtime can be correct in every observable way and still be judged broken beca
 
 Keeping that boundary explicit prevents the most expensive kind of scope creep: building a full storage stack for titles that only need a directory tree.
 
+## Security
+
+The model is a key file pair, a port assignment and a factory copy tool, and each step carries an unknown that decides whether it can be chained.
+These entries come from the exploitation surface page, with the artefact that would settle each one.
+
+| Question | Evidence that would close it |
+|---|---|
+| Which service id is the debug service | a service name table, or a traced call with the port observable |
+| Does a port assignment persist across a reboot | the same console observed before and after a power cycle |
+| Is the AT parser reachable before the port is up | a port that answers a bare AT request during boot |
+| Does the auto-copy chain run before the port is up | a card holding only the marker file, with an observed copy or menu |
+| Is the boot applet value honoured on every firmware | one byte flipped on a console, with the resulting boot recorded |
+| Does the animation corruption reach control flow on real hardware | a controlled fault under a debugger, with the faulting address known |
+| Does the pair check reject any pair the firmware itself uses | a pair that fails the mask, traced to its rejection path |
+
+The pair check is the cheapest of these to settle, because the mask is read at a single site and its failure path is a documented assertion rather than a silent return.
+
 ## Method
 
 Two habits keep this list useful rather than decorative:
