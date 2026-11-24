@@ -94,6 +94,11 @@ These entries come from the exploitation surface page, with the artefact that wo
 | Is the boot applet value honoured on every firmware | one byte flipped on a console, with the resulting boot recorded |
 | Does the animation corruption reach control flow on real hardware | a controlled fault under a debugger, with the faulting address known |
 | Does the pair check reject any pair the firmware itself uses | a pair that fails the mask, traced to its rejection path |
+| Does the release enable the SIM toolkit path | a card menu shown on screen, with the terminal profile recorded from the exchange |
+| Which pending-command mechanism the terminal uses | the APDU sequence that follows a pending status byte |
+| Does card initialisation need a network-derived step | the card-init sequence recorded up to the first proactive command |
+| Is the USB port wired as a host | a keyboard enumerating, with its descriptor read by the console |
+| Is the USB host stack enabled in this release | a descriptor request arriving from the console when a device is attached |
 
 The pair check is the cheapest of these to settle, because the mask is read at a single site and its failure path is a documented assertion rather than a silent return.
 
