@@ -1,1 +1,5 @@
 z33b0tek/site/
+
+# python
+__pycache__/
+*.pyc
