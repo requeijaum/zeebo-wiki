@@ -83,7 +83,7 @@ Keeping that boundary explicit prevents the most expensive kind of scope creep: 
 ## Security
 
 The model is a key file pair, a port assignment and a factory copy tool, and each step carries an unknown that decides whether it can be chained.
-These entries come from the exploitation surface page, with the artefact that would settle each one.
+These entries come from the three exploitation pages, with the artefact that would settle each one.
 
 | Question | Evidence that would close it |
 |---|---|

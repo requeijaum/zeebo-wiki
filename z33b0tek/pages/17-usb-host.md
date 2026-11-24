@@ -6,7 +6,7 @@ This page records the host-side stack found in the 1.1.2 images, what it parses,
 ## The host controller and its client API
 
 The applications image carries an EHCI driver, a hub driver and a host-side class layer.
-The controller registers are mapped at `0xA0800000`, with capability registers at offsets `0x000` and `0x100` and a capability length of `0x40`.
+The controller's register block is mapped at `0xA0800000`.
 The client-facing API is named by its own assertions: a client id pool that can run out at `0x10425DA4`, and a per-device-type table of ioctl functions checked at `0x10425E3C`.
 A hub driver is present, with its self-powered decision logged at `0x102F8F20`, and the controller logs pipe state at `0x103C73B8`.
 A host abstraction layer and an OEM bridge appear as source paths: `hsu_host_al_hid.c` at `0x108E90C8` and `OEMHID.c` at `0x1071DC44`.
@@ -16,9 +16,11 @@ Evidence: strings and their cross-references in the 1.1.2 applications image.
 
 The class driver announces itself in its own log: it fetches a report descriptor, and then counts the reports it found in it.
 Those two messages sit at `0x104F87B1` and `0x104F8C20`.
-Neither is reached by a direct call: both are referenced from a table of descriptors, which is what a log record table looks like from the instruction level.
+Neither is reached by a direct call: the only references come from a table of log records, which is what a logging framework looks like from the instruction level.
 The routine that loads the record at `0x10C4FE28` is `fn~0x10771B08`, whose literal pool holds the reference at `0x10771DEE`.
-That routine allocates a context, copies what the device reported, and calls `0x1079E7E4` to obtain the descriptor, logging a failure when it does not arrive.
+That routine allocates a context through two imported helpers and copies the fields the device reported.
+The descriptor message is logged from inside it, so both the fetch and the parse it reports on are reached from this routine.
+The role of each individual helper call is not established.
 Evidence: the literal-pool reference to the log record, plus disassembly of the attach routine.
 
 ## The device chooses the bytes, and the host must trust them
