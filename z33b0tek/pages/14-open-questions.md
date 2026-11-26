@@ -99,6 +99,10 @@ These entries come from the three exploitation pages, with the artefact that wou
 | Does card initialisation need a network-derived step | the card-init sequence recorded up to the first proactive command |
 | Is the USB port wired as a host | a keyboard enumerating, with its descriptor read by the console |
 | Is the USB host stack enabled in this release | a descriptor request arriving from the console when a device is attached |
+| Does the SoC identify as MSM7500 or MSM7201A | a chip-identification register read, or the same dump from a second unit and firmware |
+| Does a mirrored-repeat render with `GL_LINEAR` on a rectangular texture complete | the same draw run with a log before each call, on a unit that did not trip the watchdog |
+| Is the stencil plane available when requested in the EGL configuration | a configuration request with 4 stencil bits and the resulting plane size read back |
+| Is the ES 1.1 interface ever non-NULL | the interface query repeated on another firmware release |
 
 The pair check is the cheapest of these to settle, because the mask is read at a single site and its failure path is a documented assertion rather than a silent return.
 

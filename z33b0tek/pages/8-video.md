@@ -163,6 +163,69 @@ Skipping the decoder produces noise that looks like a memory bug: correct geomet
 Confirm the diagnosis by dumping the raw block and checking whether the size matches the compressed ratio or the uncompressed pixel count.
 If it matches the compressed ratio, the data is compressed and the render path is not at fault.
 
+## Measured on one unit
+
+A dump taken from a real console (platform id 16000) gives the platform's own answers.
+
+| Item | Value |
+|---|---|
+| GL_VENDOR | QUALCOMM, Inc. |
+| GL_RENDERER | Q3Dimension MSM7500 01.02.37 0 4.0.0 |
+| GL_VERSION | OpenGL ES 1.0-CM |
+| ES 1.0 interface | obtained |
+| ES 1.1 interface | NULL on this unit |
+| Maximum texture size | 1024 (10 mipmap levels) |
+| Texture units | 2 |
+| Vertex units (matrix palette) | 4 |
+| Depth bits | 16 |
+| Stencil bits | 0 |
+| EGL version string | 2.07.050110.34681 |
+
+EGL extensions announced: `EGL_QUALCOMM_COLOR_BUFFER`, `EGL_QUALCOMM_get_color_buffer`, `EGL_EXT_swap_control`, and the surface extras scale, rotate, transparency, color_key and overlay.
+
+GL extensions announced:
+
+- `GL_ARB_texture_env_combine`, `_crossbar`, `_dot3`, `GL_ARB_texture_mirrored_repeat`, `GL_ARB_vertex_buffer_object`.
+- `GL_ATI_extended_texture_coordinate_data_formats`, `GL_ATI_imageon_misc`, `GL_ATI_texture_compression_atitc`.
+- `GL_EXT_blend_equation_separate`, `_func_separate`, `_minmax`, `_subtract`, `GL_EXT_stencil_wrap`.
+- `GL_OES_byte_coordinates`, `_compressed_paletted_texture`, `_draw_texture`, `_fixed_point`, `_matrix_palette`, `_point_size_array`, `_point_sprite`, `_read_format`, `_single_precision`, `_vertex_buffer_object`.
+- `GL_QUALCOMM_vertex_buffer_object`.
+
+Declared in the SDK headers or named by shipped modules, but absent from the list:
+
+- `GL_OES_framebuffer_object` and therefore `glGenerateMipmapOES`.
+- `GL_OES_query_matrix`, `GL_OES_texture_cube_map`, `GL_QUALCOMM_IMAGEON`.
+- `GL_OES_texture_mirrored_repeat` and the `GL_OES_blend_*` names; the ARB and EXT forms are the ones present.
+- Point parameters, `EGL_QUALCOMM_get_power_level` and `get_color_buffer_info`.
+
+This agrees with the developer guide, which lists no render-to-texture, no automatic mipmaps and no matrix get.
+
+Interface consequence, read from the SDK wrapper source:
+
+- The wrapper asks the vendor object for the ES 1.0 and ES 1.1 interfaces separately.
+- Entry points that exist only in 1.1 (`glTexParameteri` and `glTexEnvi` among them) check the 1.1 pointer and do nothing when it is NULL.
+- There is no error and no fallback to the 1.0 interface.
+- On a unit like this one, use the fixed-point forms `glTexParameterx` and `glTexEnvx`, which have a 1.0 path.
+
+Behaviour checks on the same unit:
+
+- `glTexParameterx` with `GL_MIRRORED_REPEAT` on S and T leaves `GL_NO_ERROR`.
+- Drawing with the default filter and with `GL_LINEAR` raises no error.
+- A render test using mirrored repeat with `GL_LINEAR` on a rectangular texture, run in an earlier round, was reported to trip the console watchdog.
+  The cause was not isolated, and the parameter-only test above passed.
+- The stencil plane reports 0 bits while `GL_EXT_stencil_wrap` is announced.
+  The developer guide describes depth as 16 bits and stencil as an optional 4 bits, so 0 most likely reflects the configuration chosen, not a hardware limit.
+  The dump does not record that configuration.
+
+Two cautions:
+
+- `GL_RENDERER` is the active driver label.
+  It names an MSM7500 part, while this reference names the SoC as MSM7201A.
+  A driver string can describe a board family or an older support package, so GL alone does not settle the silicon.
+  Both names are kept until a register read decides it.
+- One unit and one firmware were measured.
+  The ES 1.1 interface being NULL does not rule it out on other releases.
+
 ## Scanout
 
 The display controller path is MDDI.

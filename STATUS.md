@@ -21,3 +21,4 @@
 
 | z33b0tek (site) | 15/09 | MIF/BAR header, PAKZ, survey de contentores, extension gating |
 | z33b0tek (site) — seção Security | 23/11 | firmware 1.1.2 (APPS + AMSS): key gate, RDevMap, parser QX, superfície AT, cadeia de autocópia, stack USB host (EHCI/usbhost/hub/HID) e interface do cartão (GSTK, dois mecanismos de comando pendente) |
+| F5-video (dump EGL/GLES real) / LACUNAS | 26/11 | 4 dumps de hardware do usuário |

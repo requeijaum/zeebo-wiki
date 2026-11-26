@@ -13,7 +13,7 @@ That single fact drives every decision in this reference: emulating the console 
 | Applications CPU | ARM1136J-S | ARMv6, ARM and Thumb-1, no Thumb-2, 528 MHz |
 | Modem CPU | ARM926EJ-S | runs AMSS on REX, 256 MHz |
 | SoC | Qualcomm MSM7201A | handset platform, undocumented publicly |
-| GPU | Adreno 130 | Yamato class, OpenGL ES 1.1 |
+| GPU | Adreno 130 | Yamato class; one measured unit reports OpenGL ES 1.0-CM and no ES 1.1 interface |
 | DSP | QDSP5 | audio and voice processing |
 | RAM | 160 MB | shared with the modem side |
 | Storage | 1 GB NAND | firmware plus installed titles |
